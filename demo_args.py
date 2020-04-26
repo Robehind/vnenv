@@ -25,7 +25,7 @@ args.update(
     nsteps = 50,
     verbose = False,
     gpu_ids = -1,
-    #load_model_dir = "../check_points/A3CTrain_89905_2000_2020-04-25_16-23-30.dat",
+    #load_model_dir = '',
     results_json = "result_demo.json"
 )
 model_args_dict = {}
