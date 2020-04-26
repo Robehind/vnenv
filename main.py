@@ -13,7 +13,6 @@ from tqdm import tqdm
 from utils.thordata_utils import get_scene_names
 from utils.mean_calc import ScalarMeanTracker
 import os
-#没有实现断点续练
 #TODO 可能要换A2C了
 def main():
     #读取参数
