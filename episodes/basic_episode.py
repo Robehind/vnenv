@@ -3,6 +3,7 @@ from environment.discrete_env import DiscreteEnvironment
 import random
 import torch
 import copy
+import time
 #最大步数在这里设置.完成一个单个的episode能完成的所有事情
 # 定义好了之后就可以不断通过外部参数重置开始
 class BasicEpisode:
@@ -14,12 +15,14 @@ class BasicEpisode:
         chosen_scene_names,
         chosen_objects = None,
         max_epi_lengh = 100,
-        verbose = False
+        verbose = False,
+        visualize = False,
     ):
         if list(env.actions) != list(agent.actions):
             raise Exception("Actions not matched")
         self.env = env
         self.verbose = verbose
+        self.visualize = visualize
         self.agent = agent
         self.done = False
         self.state = None
@@ -59,6 +62,9 @@ class BasicEpisode:
             print("In scene %s heading towards %s"%(scene_name, target))
         reper = self.env.set_target(target)
         self.agent.reset(reper)
+        if self.visualize: 
+            self.env.render() 
+            time.sleep(0.3)
 
     def step(self):
         if self.done:
@@ -68,14 +74,20 @@ class BasicEpisode:
             print(action)
         
         _, reward, self.done, info = self.env.step(action)
+        if self.visualize: 
+            self.env.render()
+            time.sleep(0.3)
+            print(action)
         self.agent.get_reward(reward)
         self.total_reward += reward
         self.infos.append(info)
         if self.done:
             self.success = info['success']
         self.length += 1
-        if info['moved']:
+        #if info['moved']:
+        if action is not 'Done':
             self.move_length += 1
+        
         if self.length >= self.max_length:
             self.done = True
             if self.verbose:
@@ -99,8 +111,12 @@ class BasicEpisode:
                 self.move_length, self.env.best_path_len()
                 )
             if self.env.best_path_len() == 0:
+                print("Warning: The best path len goes to 0")
                 if self.move_length == 0:
                     return 1
+                else:
+                    #一种暂时的处理
+                    return 1/float(self.move_length)
             return float(self.env.best_path_len())/float(self.move_length)
         return 0
 

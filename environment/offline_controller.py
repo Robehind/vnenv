@@ -42,7 +42,7 @@ class OfflineController:
         self.all_states = None
 
         # Allowed y
-        self.y = None
+        self.y = 0.91
         #根据不同的移动可能会导致不同的move_list，z永远取x的循环后两位或者后一位
         self.move_list = [0, 1, 1, 1, 0, -1, -1, -1]
         self.move_list = [x*self.grid_size for x in self.move_list]
@@ -67,7 +67,6 @@ class OfflineController:
 
         self.last_event = None
         self.state = None
-        self.start_state = None
         self.last_opt_success = True
         self.last_opt = None
         #讲道理应该用self.各种angle来初始化的
@@ -135,26 +134,21 @@ class OfflineController:
         self.last_event = self.get_event()
         return self.last_event
         
-    def set_random_state(self):
+    def set_random_state(self, ban_state = None):
         lenth = len(self.grid)
-        self.state = AgentPoseState(
-            **self.grid[random.choice(range(lenth))], 
-            #rotation=random.choice(self.rotations),
-            rotation = 0,#这里主要考虑到可能初始化到一个“斜的角度”给只能转90度的智能体，以后可以考虑解决
-            horizon = 0
-        )
-        self.start_state = copy.deepcopy(self.state)
+        while 1:
+            self.state = AgentPoseState(
+                **self.grid[random.choice(range(lenth))], 
+                #rotation=random.choice(self.rotations),
+                rotation = 0,#这里主要考虑到可能初始化到一个“斜的角度”给只能转90度的智能体，以后可以考虑解决
+                horizon = 0
+            )
+            if ban_state == None or str(self.state) not in ban_state: break
+
         self.y = self.state.y
 
         self.last_opt_success = True
         self.last_opt = 'set_state'
-        self.last_event = self.get_event()
-        return self.last_event
-    
-    def back_to_start(self):
-        self.state = copy.deepcopy(self.start_state)
-        self.last_opt = 'set_state'
-        self.last_opt_success = True
         self.last_event = self.get_event()
         return self.last_event
 
@@ -303,9 +297,18 @@ class OfflineController:
                     path_len = xx
         
         return cloest_objID, path_len
+
+    def states_where_visible(self, obj):
+        if obj == None:
+            return []
+        tmp = []
+        for k in self.all_objects_with_id():
+            if k.split("|")[0] == obj:
+                tmp.extend(self.metadata[k])
+        return tmp
     
     def shortest_path_to_target(self, source_state, objId):
-        """ Many ways to reach objId, which one is best? 
+        """ 最短路定义为使用当前动作集能够做到的最短动作数 
         遗留问题在于无法斜向运动的智能体永远无法走出该函数定义的最短路径，后续修复"""
 
         states_where_visible = []
@@ -320,10 +323,7 @@ class OfflineController:
         best_path_len = 0
         for t in states_where_visible:
             path = self.shortest_path(source_state, t)
-            path_len = 0
-            for i in range(len(path)-1):
-                if self.made_a_move(path[i], path[i+1]):
-                    path_len += 1
+            path_len = len(path)-1
 
             if path_len < best_path_len or best_path is None:
                 best_path = path

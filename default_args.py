@@ -2,6 +2,7 @@ from utils.vnenv_args import VNENVargs
 
 args_dict = dict(
     verbose = False,#为True时将在控制台打印很多信息，调试用
+    visulize = False,
     seed = 1114,#随机数生成种子
     gpu_ids = -1,#指定要使用的显卡，为-1时使用cpu。gpu_ids = [0,1,2,3] 
     total_train_epi = 6e3,#指定训练多少个episode

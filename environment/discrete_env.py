@@ -92,12 +92,13 @@ class DiscreteEnvironment:
         if isinstance(agent_state, str):
             agent_state = self.controller.get_state_from_str(agent_state)
         controller_event = self.controller.reset(scene_name, agent_state)
-        self.agent_state = controller_event.agent_state
-        self.start_state = copy.deepcopy(self.agent_state)
         self.all_objects = self.controller.all_objects()
+        self.agent_state = controller_event.agent_state
         self.state = controller_event.data
         #will check if target is legal in get_target_reper()
         self.set_target(target_str)
+        
+        self.start_state = copy.deepcopy(self.agent_state)
 
         self.last_action = None
         self.reward = 0
@@ -160,9 +161,17 @@ class DiscreteEnvironment:
         return self.controller.object_is_visible(target)
 
     def set_target(self, target_str):
+        """设置目标的时候可能会改变初始位置和当前位置"""
         #it's possible to set no target. Target_str can be None
         self.target_reper = self.get_target_reper(target_str)
         self.target_str = target_str
+        #不让智能体初始化在终止位置
+        if self.target_visiable():
+            ban_list = self.controller.states_where_visible(target_str)
+            controller_event = self.controller.set_random_state(ban_list)
+            self.agent_state = controller_event.agent_state
+            self.state = controller_event.data
+            self.start_state = copy.deepcopy(self.agent_state)
         return self.target_reper
 
     def get_target_reper(self, target_str):
