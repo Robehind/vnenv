@@ -1,4 +1,4 @@
-from default_args import args
+from .default_args import args
 
 args.update(
     train_scenes = {'bathroom':[31],},
@@ -13,7 +13,7 @@ args.update(
     },
     grid_size = 0.5,
     total_train_epi = 2000,
-    total_eval_epi = 100,
+    total_eval_epi = 1000,
     threads = 4,
     log_title = 'DemoModel',
     optimizer = 'Adam',
@@ -25,7 +25,7 @@ args.update(
     nsteps = 50,
     verbose = False,
     gpu_ids = -1,
-    #load_model_dir = '',
+    load_model_dir = '../check_points/DemoModel_2000_2020-05-08_16-11-40.dat',
     results_json = "result_demo.json"
 )
 model_args_dict = {}

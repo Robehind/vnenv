@@ -16,6 +16,7 @@ args_dict = dict(
     load_model_dir = '',#要读取的模型参数的完整路径，包括文件名
     log_dir = '../TXlog',#tensorboardx日志文件的生成位置
     nsteps = 5,#更新梯度的频率，每n步进行一次loss计算并更新梯度
+    #history_length = 1,#环境提供的历史状态的长度
     threads = 4,#线程数
     offline_data_dir = '../thordata/mixed_offline_data',#数据集的位置，该路径下应该是那些FloorPlan开头的文件夹才对
     lr = 0.0002,#learning rate

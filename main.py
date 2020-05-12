@@ -16,7 +16,7 @@ import os
 #TODO 可能要换A2C了
 def main():
     #读取参数
-    from demo_args import args
+    from exp_args.gcn_args import args
     #生成日志文件
     start_time = time.time()
     local_start_time_str = time.strftime(

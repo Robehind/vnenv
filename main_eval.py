@@ -13,7 +13,7 @@ from utils.mean_calc import ScalarMeanTracker
 
 def main():
     #读取参数
-    from demo_args import args
+    from exp_args.demo_args import args
     #查看载入模型是否存在
     if args.load_model_dir == '':
         print('Warining: load_model_dir didn\'t exist. Testing model with init params')

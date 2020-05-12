@@ -11,7 +11,7 @@ from utils.thordata_utils import get_scene_names, random_divide
 
 def main():
     #读取参数
-    from demo_args import args
+    from exp_args.demo_args import args
 
     args.gpu_id = -1
     args.threads = 1

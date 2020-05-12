@@ -1,19 +1,20 @@
-from default_args import args
+from .default_args import args
 
 args.update(
-    train_scenes = {'kitchen':[25],},
-    train_targets = {'kitchen':["Microwave"],},
-    test_scenes = {'kitchen':[25],},
-    test_targets = {'kitchen':["Microwave"],},
+    train_scenes = {'bathroom':[31],},
+    train_targets = {'bathroom':["Sink","ToiletPaper","Towel","Cloth"],},
+    test_scenes = {'bathroom':[31],},
+    test_targets = {'bathroom':["Sink","ToiletPaper","Towel","Cloth"],},
     action_dict = {
         'MoveAhead':['m0'],
         'TurnLeft':['r-90'],
         'TurnRight':['r90'],
-        'BackOff':['m180']
+        #'BackOff':['m180']
+        'Done':None,
     },
-    grid_size = 0.25,
-    total_train_epi = 2000,
-    total_eval_epi = 100,
+    grid_size = 0.5,
+    total_train_epi = 20000,
+    total_eval_epi = 1000,
     threads = 4,
     log_title = 'A3C',
     optimizer = 'Adam',
@@ -25,7 +26,7 @@ args.update(
     nsteps = 50,
     verbose = False,
     gpu_ids = -1,
-    #load_model_dir = "../check_points/A3CTrain_89905_2000_2020-04-25_16-23-30.dat",
+    load_model_dir = "../check_points/A3C_20000_2020-05-07_16-40-59.dat",
     results_json = "result_demo.json"
 )
 model_args_dict = dict(
