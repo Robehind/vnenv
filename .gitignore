@@ -1,6 +1,6 @@
 */__pycache__/*
 result_demo.json
 __pycache__/*
-test_env.py
 test_torch.py
 test_vision.py
+env_test.py
