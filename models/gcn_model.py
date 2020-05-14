@@ -4,7 +4,6 @@ import json
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.models as models
 import numpy as np
 import scipy.sparse as sp
 from torch.nn.parameter import Parameter
@@ -41,13 +40,10 @@ class ScenePriorsModel(nn.Module):
         self.critic_linear = nn.Linear(512, 1)
 
     def forward(self, model_input):
-        # x is the observation (resnet feature stacked)
-        # y is the target
-        # z is the observation (RGB frame)
-        #(x, y, z) = model_input
+
         x = model_input['fc|4']
         y = model_input['glove']
-        z = model_input['RGB'].permute(0,3,1,2)
+        z = model_input['score']
 
         #x = x.view(-1)
         #print(x.shape)
@@ -72,11 +68,6 @@ class ScenePriorsModel(nn.Module):
 class GCN(nn.Module):
     def __init__(self):
         super(GCN, self).__init__()
-
-        self.resnet50 = models.resnet50(pretrained=True)
-        for p in self.resnet50.parameters():
-            p.requires_grad = False
-        self.resnet50.eval()
 
         # Load adj matrix for GCN
         A_raw = torch.load("../thordata/gcn/adjmat.dat")
@@ -110,8 +101,7 @@ class GCN(nn.Module):
 
     def gcn_embed(self, x):
 
-        resnet_score = self.resnet50(x)
-        resnet_embed = self.resnet_to_gcn(resnet_score)
+        resnet_embed = self.resnet_to_gcn(x)
         word_embedding = self.word_to_gcn(self.all_glove)
 
         n_steps = resnet_embed.shape[0]
