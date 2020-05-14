@@ -1,6 +1,7 @@
 from .offline_controller import OfflineController
 import cv2
 import copy
+import numpy as np
 #只提供最基础的target和图像预处理后的state的数据，如果需要什么以往动作、速度就得在agent里自己写
 #但凡agent可以通过自己的历史记录得到的state，都让agent自己搞定，env不管
 class DiscreteEnvironment:
@@ -63,6 +64,7 @@ class DiscreteEnvironment:
         self.agent_state = None
         self.last_agent_state = None
         self.last_action = None
+        self.fc_size = None #需要用于构造历史记录的fc的大小，用于退栈
         
         self.target_str = None
         self.target_reper = None
@@ -95,6 +97,10 @@ class DiscreteEnvironment:
         self.all_objects = self.controller.all_objects()
         self.agent_state = controller_event.agent_state
         self.state = controller_event.data
+        for k in self.state:
+            if '|' in k:
+                self.state[k] = np.tile(self.state[k].squeeze(), (int(k.split("|")[1])))
+                self.fc_size = int(self.state[k].shape[0]/int(k.split("|")[1]))
         #will check if target is legal in get_target_reper()
         self.set_target(target_str)
         
@@ -117,7 +123,13 @@ class DiscreteEnvironment:
         controller_event = self.controller.action_interpret(self.action_dict[action])
         self.last_agent_state = self.agent_state
         self.agent_state = controller_event.agent_state
-        self.state = controller_event.data
+        state = controller_event.data
+        for k in state:
+            if '|' in k:
+                self.state[k] = np.append(self.state[k][self.fc_size:], state[k])
+            else:
+                self.state[k] = state[k]
+
         self.last_action = action
         #分析events，给reward
         event, self.done = self.judge(action, controller_event.metadata)
@@ -171,6 +183,10 @@ class DiscreteEnvironment:
             controller_event = self.controller.set_random_state(ban_list)
             self.agent_state = controller_event.agent_state
             self.state = controller_event.data
+            for k in self.state:
+                if '|' in k:
+                    self.state[k] = np.tile(self.state[k].squeeze(), (int(k.split("|")[1])))
+                    self.fc_size = int(self.state[k].shape[0]/int(k.split("|")[1]))
             self.start_state = copy.deepcopy(self.agent_state)
         return self.target_reper
 
