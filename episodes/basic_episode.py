@@ -107,9 +107,9 @@ class BasicEpisode:
 
     def compute_spl(self):
         if self.success:
-            assert self.move_length >= self.env.best_path_len(), (
-                self.move_length, self.env.best_path_len()
-                )
+            #TODO 这里是没办法了，以后修正了数据集再来改吧
+            if self.move_length < self.env.best_path_len():
+                return 1.
             if self.env.best_path_len() == 0:
                 print("Warning: The best path len goes to 0")
                 if self.move_length == 0:
