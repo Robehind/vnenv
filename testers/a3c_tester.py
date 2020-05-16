@@ -33,7 +33,7 @@ def a3c_eval(
 
     agent = creator['agent'](
         list(args.action_dict.keys()),
-        list(args.state_dict.keys()),
+        list(args.obs_dict.keys()),
         model,
         gpu_id
     )
@@ -41,18 +41,18 @@ def a3c_eval(
         args.offline_data_dir,
         args.action_dict,
         args.target_dict,
-        args.state_dict,
+        args.obs_dict,
         args.reward_dict,
+        max_steps = args.max_epi_length,
         grid_size = args.grid_size,
-        chosen_objects = chosen_objects
+        rotate_angle = args.rotate_angle,
+        chosen_scenes = chosen_scene_names,
+        chosen_targets = chosen_objects
     )
     #initialize a episode
     epi = creator['episode'](
         agent,
         env,
-        chosen_scene_names,
-        chosen_objects,
-        args.max_epi_length,
         verbose = args.verbose
     )
     if args.verbose:

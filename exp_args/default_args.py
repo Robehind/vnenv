@@ -5,7 +5,7 @@ args_dict = dict(
     visulize = False,
     seed = 1114,#随机数生成种子
     gpu_ids = -1,#指定要使用的显卡，为-1时使用cpu。gpu_ids = [0,1,2,3] 
-    total_train_epi = 6e3,#指定训练多少个episode
+    total_train_frames = 6e3,#指定训练多少frames
     max_epi_length = 100,#每个episode的最大步长，即agent在episode中的最大行动数
     total_eval_epi = 1000,#指定测试时测试多少个episode
     print_freq = 1000,#每进行n个episode，就向tensorboardx输出一次训练信息
@@ -48,11 +48,11 @@ args_dict = dict(
     #目标参数字典，键值为目标的某个表示的类型，一个目标可以有多种表示。值为读取该表示的数据文件所在的路径
     #目前仅支持glove
     target_dict = {
-        'glove':'../thordata/word_embedding/thor_glove/glove_map300d.hdf5',
+        'glove':'../thordata/word_embedding/word_embedding.hdf5',
     },
     #状态参数字典，键值为状态的某个表示的类型，一个状态可以有多个表示。
     #值为读取该表示的数据文件的文件名路径，当选定某个scene后，才能找到对应改scene的文件
-    state_dict = {
+    obs_dict = {
         'fc':'resnet50_fc.hdf5',#注意bedroom和bathroom没有fc文件，另外223房间有毛病
         #fc:1x2048x1x1
         },
@@ -107,6 +107,12 @@ args_dict = dict(
         'bedroom':["HousePlant", "Lamp", "Book", "AlarmClock"],
         'bathroom':["Sink", "ToiletPaper", "SoapBottle", "LightSwitch"],
     },
+    grid_size = 0.25,
+    rotate_angle = 45,
+    move_angle = 45,
+    horizon_angle = 30,
+    chosen_targets = None,#默认值为None时则无限制,这个表是针对env目前能加载的所有scene而言的
+    debug = False,
 )
 #模型参数，这一块儿目前写得还不够灵活，你的模型需要什么参数，就都写在这里
 #然后在初始化模型的时候，直接用**args.model_args传入就行了

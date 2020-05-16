@@ -16,7 +16,7 @@ def main():
     args.gpu_id = -1
     args.threads = 1
     args.visualize = True,
-    args.state_dict.update(dict(image = 'images.hdf5'))
+    args.obs_dict.update(dict(image = 'images.hdf5'))
 
     #查看载入模型是否存在
     if args.load_model_dir == '':
@@ -29,8 +29,10 @@ def main():
         'agent':getattr(agents, args.agent),
         'env':getattr(environment, args.env),
     }
-
-    chosen_scene_names = get_scene_names(args.test_scenes)
+    chosen_scene_names = []
+    tmp = get_scene_names(args.train_scenes)
+    for k in tmp:
+        chosen_scene_names += k
     chosen_objects = []
     for k in args.test_targets.keys():
         chosen_objects = chosen_objects + args.test_targets[k]
@@ -52,7 +54,7 @@ def main():
 
     agent = creator['agent'](
         list(args.action_dict.keys()),
-        list(args.state_dict.keys()),
+        list(args.obs_dict.keys()),
         model,
         gpu_id
     )
@@ -60,18 +62,18 @@ def main():
         args.offline_data_dir,
         args.action_dict,
         args.target_dict,
-        args.state_dict,
+        args.obs_dict,
         args.reward_dict,
+        max_steps = args.max_epi_length,
         grid_size = args.grid_size,
-        chosen_objects = chosen_objects
+        rotate_angle = args.rotate_angle,
+        chosen_scenes = chosen_scene_names,
+        chosen_targets = chosen_objects
     )
     #initialize a episode
     epi = creator['episode'](
         agent,
         env,
-        chosen_scene_names,
-        chosen_objects,
-        args.max_epi_length,
         verbose = args.verbose,
         visualize = True,
     )

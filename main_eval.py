@@ -54,7 +54,7 @@ def main():
                 result_queue,
                 creator,
                 #这里要注意
-                [scene_names_div[thread_id]],
+                scene_names_div[thread_id],
                 chosen_objects,
             ),
         )

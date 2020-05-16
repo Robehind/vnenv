@@ -1,31 +1,36 @@
 from .default_args import args
 
 args.update(
-    train_scenes = {'bathroom':[31],},
-    train_targets = {'bathroom':["SoapBottle"],},
-    test_scenes = {'bathroom':[31],},
-    test_targets = {'bathroom':["SoapBottle"],},
+    train_scenes = {'kitchen':[25],},#{'bathroom':[31],},
+    train_targets = {'bathroom':["Microwave"],},
+    test_scenes = {'kitchen':[25],},#{'bathroom':[31],},
+    test_targets = {'bathroom':["Microwave"],},
     action_dict = {
         'MoveAhead':['m0'],
         'TurnLeft':['r-90'],
         'TurnRight':['r90'],
         'BackOff':['m180']
     },
-    grid_size = 0.5,
-    total_train_epi = 2000,
+    obs_dict = {
+        'fc':'resnet50_fc_new.hdf5',
+        #'score':'resnet50_score.hdf5'
+        },
+    grid_size = 0.25,
+    rotate_angle = 90,
+    total_train_frames = 100000,
     total_eval_epi = 1000,
     threads = 4,
     log_title = 'DemoModel',
     optimizer = 'Adam',
     model = 'DemoModel',
     optim_args = dict(lr = args.lr,),
-    print_freq = 100,
+    print_freq = 1000,
     max_epi_length = 100,
-    model_save_freq = 2000,
+    model_save_freq = 100000,
     nsteps = 50,
     verbose = False,
     gpu_ids = -1,
-    load_model_dir = '../check_points/DemoModel_2000_2020-05-08_16-11-40.dat',
+    load_model_dir = '../check_points/DemoModel_100006_2020-05-16_21-35-19.dat',
     results_json = "result_demo.json"
 )
 model_args_dict = {}

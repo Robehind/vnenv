@@ -16,7 +16,7 @@ import os
 #TODO 可能要换A2C了
 def main():
     #读取参数
-    from exp_args.gcn_args import args
+    from exp_args.demo_args import args
     #生成日志文件
     start_time = time.time()
     local_start_time_str = time.strftime(
@@ -68,8 +68,12 @@ def main():
     end_flag = mp.Value(ctypes.c_bool, False)
 
     result_queue = mp.Queue()
-
-    chosen_scene_names = get_scene_names(args.train_scenes)
+    #这里用于分配各个线程的环境可以加载的场景以及目标
+    #暂时就每个线程都加载一样的场景集合和物体
+    chosen_scene_names = []
+    tmp = get_scene_names(args.train_scenes)
+    for k in tmp:
+        chosen_scene_names += k
     chosen_objects = []
     for k in args.train_targets.keys():
         chosen_objects = chosen_objects + args.train_targets[k]
@@ -97,30 +101,35 @@ def main():
 
     #取结果并记录
     print_freq = args.print_freq
+    save_freq = args.model_save_freq
     train_scalars = ScalarMeanTracker()
 
-    train_total_ep = 0
+    n_epis = 0
     n_frames = 0
+    prt_times = 1
+    save_times = 1
 
-    pbar = tqdm(total=args.total_train_epi)
+    pbar = tqdm(total=args.total_train_frames)
 
     try:
-        while train_total_ep < args.total_train_epi:
+        while n_frames < args.total_train_frames:
 
             train_result = result_queue.get()
             train_scalars.add_scalars(train_result)
-            train_total_ep += 1
-            pbar.update(1)
+            n_epis += 1
+            pbar.update(train_result["ep_length"])
             n_frames += train_result["ep_length"]
-            if (train_total_ep % print_freq) == 0:
-                log_writer.add_scalar("n_frames", n_frames, train_total_ep)
+            if n_frames > print_freq*prt_times:
+                prt_times += 1
+                log_writer.add_scalar("n_frames", n_frames, n_epis)
                 tracked_means = train_scalars.pop_and_reset()
                 for k in tracked_means:
                     log_writer.add_scalar(
-                        k + "/train", tracked_means[k], train_total_ep
+                        k + "/train", tracked_means[k], n_frames
                     )
 
-            if (train_total_ep % args.model_save_freq) == 0:
+            if n_frames > save_freq*save_times:
+                save_times += 1
                 #print(n_frames)
                 if not os.path.exists(args.save_model_dir):
                     os.makedirs(args.save_model_dir)
@@ -128,7 +137,7 @@ def main():
                 save_path = os.path.join(
                     args.save_model_dir,
                     "{0}_{1}_{2}.dat".format(
-                        args.log_title, train_total_ep, local_start_time_str
+                        args.log_title, n_frames, local_start_time_str
                     ),
                 )
                 torch.save(state_to_save, save_path)

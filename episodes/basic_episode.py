@@ -12,9 +12,6 @@ class BasicEpisode:
         self,
         agent,
         env,
-        chosen_scene_names,
-        chosen_objects = None,
-        max_epi_lengh = 100,
         verbose = False,
         visualize = False,
     ):
@@ -26,15 +23,9 @@ class BasicEpisode:
         self.agent = agent
         self.done = False
         self.state = None
-        self.chosen_objects = chosen_objects
-        self.chosen_scene_names = chosen_scene_names
-        self.max_length = max_epi_lengh
         self.length = 0
-        self.last_state = None
         self.move_length = 0
         self.total_reward = 0
-        self.scene_idxs = range(0, len(self.chosen_scene_names))
-        random.shuffle(self.scene_idxs)
         #包含一系列的total参数用于记录
         self.infos = []
         self.success = False
@@ -46,22 +37,9 @@ class BasicEpisode:
         target = None, #if None, choose randomly in all_objects and chosen objects
         init_pose = None,
     ):
-        if scene_name == None:
-            if scene_type_idx == None:
-                scene_name = random.choice(random.choice(self.chosen_scene_names))
-            else:
-                idx = self.scene_idxs[scene_type_idx]
-                scene_name = random.choice(self.chosen_scene_names[idx])
-        pose = None if init_pose == None else init_pose
-        #必须先重置环境才知道这个环境到底支持去找哪些物品
-        self.env.reset(scene_name, None, pose)
-        if target == None:
-            objects = list(set(self.env.all_objects).intersection(set(self.chosen_objects)))
-            target = random.choice(objects)
-        if self.verbose:
-            print("In scene %s heading towards %s"%(scene_name, target))
-        reper = self.env.set_target(target)
-        self.agent.reset(reper)
+        
+        _, target_reper = self.env.reset(scene_name, target, init_pose)
+        self.agent.reset(target_reper)
         if self.visualize: 
             self.env.render() 
             time.sleep(0.3)
@@ -69,7 +47,7 @@ class BasicEpisode:
     def step(self):
         if self.done:
             raise Exception('episode step while done')
-        action = self.agent.action(self.env.state)
+        action = self.agent.action(self.env.get_obs())
         if self.verbose:
             print(action)
         
@@ -88,10 +66,6 @@ class BasicEpisode:
         if action is not 'Done':
             self.move_length += 1
         
-        if self.length >= self.max_length:
-            self.done = True
-            if self.verbose:
-                print('Done by reaching max epi length')
     
     def get_nstep_exps(self, num_steps):
         '''产生n步交互数据。'''
@@ -100,24 +74,25 @@ class BasicEpisode:
             if self.done:
                 break
         #涉及传参的问题
-        _ , R = self.agent.get_pi_v(self.env.state)
+        _ , R = self.agent.get_pi_v(self.env.get_obs())
         #这里的输出是保留计算图的变量
         pi_batch, v_batch = self.agent.get_pi_v(self.agent.exps['states'])
         return self.agent.exps, pi_batch, v_batch, R.cpu().item()
 
     def compute_spl(self):
+        _, best_len = self.env.best_path_len()
         if self.success:
             #TODO 这里是没办法了，以后修正了数据集再来改吧
-            if self.move_length < self.env.best_path_len():
+            if self.move_length < best_len:
                 return 1.
-            if self.env.best_path_len() == 0:
+            if best_len == 0:
                 print("Warning: The best path len goes to 0")
                 if self.move_length == 0:
                     return 1
                 else:
                     #一种暂时的处理
                     return 1/float(self.move_length)
-            return float(self.env.best_path_len())/float(self.move_length)
+            return float(best_len)/float(self.move_length)
         return 0
 
     def clear_exps(self):
