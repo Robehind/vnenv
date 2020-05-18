@@ -9,6 +9,7 @@ args.update(
         'MoveAhead':['m0'],
         'TurnLeft':['r-90'],
         'TurnRight':['r90'],
+        #'Done':None
         #'BackOff':['m180']
     },
     obs_dict = {

@@ -52,7 +52,7 @@ args_dict = dict(
     #状态参数字典，键值为状态的某个表示的类型，一个状态可以有多个表示。
     #值为读取该表示的数据文件的文件名路径，当选定某个scene后，才能找到对应改scene的文件
     obs_dict = {
-        'fc':'resnet50_fc.hdf5',#注意bedroom和bathroom没有fc文件，另外223房间有毛病
+        #'fc':'resnet50_fc.hdf5',#注意bedroom和bathroom没有fc文件，另外223房间有毛病
         #fc:1x2048x1x1
         },
     #回报参数字典，键值为某种事件的字符串，值为该事件对应的回报
