@@ -41,7 +41,7 @@ class ScenePriorsModel(nn.Module):
 
     def forward(self, model_input):
 
-        x = model_input['fc|4']
+        x = model_input['fc|4'].reshape(-1, 8192)
         y = model_input['glove']
         z = model_input['score']
 
