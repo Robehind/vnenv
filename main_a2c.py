@@ -12,10 +12,11 @@ import os
 from utils.parallel_env import make_envs, VecEnv
 from trainers.loss_functions import a2c_loss
 import numpy as np
+from utils.mean_calc import ScalarMeanTracker
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a2c_demo_args import args
+    from exp_args.a2c_gcn import args
     #生成日志文件
     start_time = time.time()
     local_start_time_str = time.strftime(
@@ -101,13 +102,13 @@ def main():
     total_reward = 0
     success_num = 0
 
-    exps={
-        'rewards':[],
-        'masks':[],
-        'action_idxs':[]
-    }
+    # exps={
+    #     'rewards':[],
+    #     'masks':[],
+    #     'action_idxs':[]
+    # }
     obses = {k:[] for k in envs.keys}
-
+    loss_traker = ScalarMeanTracker()
     pbar = tqdm(total=args.total_train_frames)
     obs = envs.reset()
     while n_frames < args.total_train_frames:
@@ -130,7 +131,6 @@ def main():
             n_epis += done.sum()
             total_reward += r.sum()
             success_num += success.sum()
-        
 
         _, v_final = agent.get_pi_v(obs)
         v_final = v_final.detach().cpu().numpy().reshape(-1)
@@ -140,6 +140,8 @@ def main():
         loss = a2c_loss(v_batch, pi_batch, v_final, exps, gpu_id)
         optimizer.zero_grad()
         loss['total_loss'].backward()
+        for k in loss:
+            loss_traker.add_scalars({k:loss[k].item()})
         optimizer.step()
 
         #记录、保存、输出
@@ -152,12 +154,11 @@ def main():
             log_writer.add_scalar("epi length", args.print_freq/n_epis, n_frames)
             log_writer.add_scalar("total reward", total_reward/n_epis, n_frames)
             log_writer.add_scalar("success", success_num/n_epis, n_frames)
-            n_epis = 0
-            total_reward = 0
-            success_num = 0
+            for k,v in loss_traker.pop_and_reset().items():
+                log_writer.add_scalar(k, v, n_frames)
+            n_epis, total_reward, success_num = 0,0,0
 
         if n_frames % args.model_save_freq == 0:
-            #print(n_frames)
             if not os.path.exists(args.save_model_dir):
                 os.makedirs(args.save_model_dir)
             state_to_save = model.state_dict()
