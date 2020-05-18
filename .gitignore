@@ -5,3 +5,4 @@ test_torch.py
 test_vision.py
 env_test.py
 test_vec_env.py
+speed_test.py
