@@ -128,7 +128,7 @@ def main():
                         k + "/train", tracked_means[k], n_frames
                     )
 
-            if n_frames > save_freq*save_times:
+            if n_frames >= save_freq*save_times:
                 save_times += 1
                 #print(n_frames)
                 if not os.path.exists(args.save_model_dir):

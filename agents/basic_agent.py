@@ -1,12 +1,10 @@
 import torch
 import torch.nn.functional as F
-from torch.autograd import Variable
 import numpy as np
 import copy
 
 from utils.net_utils import toFloatTensor
-#用来计算loss的前几步的value等等信息由agent自己把握
-#定义成数据生产者，不执行损失函数计算
+#让agent可以知道动作的字符串，也许在未来有作用
 class BasicAgent:
     """实现一个基本导航智能体的相关功能，并记录仅智能体可以得到的数据到exps变量中。"""
     def __init__(

@@ -26,7 +26,7 @@ args_dict = dict(
     #直接写类名或函数名
     trainer = 'a3c_train',
     tester = 'a3c_eval',
-    loss_func = 'a3c_loss',
+    loss_func = 'a3c_loss',#没用啊....
     model = 'LiteModel',#需要的参数见下
     agent = 'BasicAgent',
     optimizer = 'SGD',#需要的参数见下
@@ -46,7 +46,6 @@ args_dict = dict(
         #包含Done字符串时，需要智能体自主提出结束episode，不包含时环境会自动判定是否结束
     },
     #目标参数字典，键值为目标的某个表示的类型，一个目标可以有多种表示。值为读取该表示的数据文件所在的路径
-    #目前仅支持glove
     target_dict = {
         'glove':'../thordata/word_embedding/word_embedding.hdf5',
     },

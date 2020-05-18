@@ -1,7 +1,7 @@
 from .default_args import args
 
 args.update(
-    train_scenes = {'kitchen':[25],},#{'bathroom':[31],},
+    train_scenes = {'kitchen':[25],},
     train_targets = {'bathroom':["Microwave"],},
     test_scenes = {'kitchen':[1],},#{'bathroom':[31],},
     test_targets = {'bathroom':["Microwave"],},
@@ -20,21 +20,21 @@ args.update(
     total_train_frames = 40000,
     total_eval_epi = 1000,
     threads = 4,
-    log_title = 'DemoModel',
+    log_title = 'A2CDemoModel',
     optimizer = 'Adam',
     model = 'DemoModel',
+    agent = 'A2CAgent',
     optim_args = dict(lr = args.lr,),
     print_freq = 1000,
     max_epi_length = 100,
-    model_save_freq = 40000,
-    nsteps = 40,
+    model_save_freq = 200000,
+    nsteps = 10,
     verbose = False,
-    gpu_ids = -1,
-    #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-17_18-39-39.dat',
+    gpu_ids = [0],
+    #load_model_dir = '../check_points/DemoModel_100006_2020-05-16_21-35-19.dat',
     results_json = "result_demo.json"
 )
 model_args_dict = {'action_size' : len(args.action_dict)}
 args.update(
     model_args = model_args_dict,
 )
-

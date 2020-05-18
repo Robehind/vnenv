@@ -4,8 +4,6 @@ import random
 import torch
 import copy
 import time
-#最大步数在这里设置.完成一个单个的episode能完成的所有事情
-# 定义好了之后就可以不断通过外部参数重置开始
 class BasicEpisode:
     """用于管理agent和env的交互和重置，只记录计算相关数据，不进行loss计算和反向传播"""
     def __init__(

@@ -111,8 +111,9 @@ class DiscreteEnvironment:
         self.all_objects_id = None #房间支持可以找的所有物体以及其坐标，in str
         self.all_agent_states = None #智能体所有的可能的位姿状态，str
         self.all_visible_states = None #智能体在哪些位置可以看到当前目标， in str
+        
         #不同的目标表示可能会导致在每次重置环境时读取新的状态表示文件,未来再改善，应该写到reset里
-        self.target_reper_info = []
+        self.target_reper_info = {}
         self.tLoader = None
         self.loader_support = {} #scene里有的object未必在reper里就有
         for str_ in self.target_type:
@@ -120,17 +121,29 @@ class DiscreteEnvironment:
                 self.tLoader = h5py.File(self.target_dict[str_], "r",)
                 self.loader_support[str_] = self.tLoader[str_].keys()
                 tmp = self.tLoader[str_][list(self.tLoader[str_].keys())[0]][:]
-                self.target_reper_info.append((str_, tmp.shape, tmp.dtype))
+                self.target_reper_info.update({str_:(tmp.shape, tmp.dtype)})
+        
         #随机读一个房间的数据，生成状态的信息，在并行化环境的时候用得上
+        self.his_states = [] #in str
+        self.his_len = 0
         scene_name = random.choice(self.chosen_scenes)
-        self.obs_info = []
+        self.obs_info = {}
         for type_, name_ in self.obs_dict.items():
             loader = h5py.File(
                 os.path.join(offline_data_dir, scene_name, name_),"r",
             )
             tmp = loader[list(loader.keys())[0]][:]
-            self.obs_info.append({type_:(tmp.shape, tmp.dtype)})
+            if '|' in type_:
+                shape = (int(type_.split('|')[1]), *tmp.shape)
+                self.his_len = max(self.his_len, int(type_.split('|')[1]))
+            else:
+                shape = tmp.shape
+            self.obs_info.update({type_:(shape, tmp.dtype)})
             loader.close()
+
+        self.data_info = {}
+        self.data_info.update(self.target_reper_info)
+        self.data_info.update(self.obs_info)
 
         #action check
         need_pitch = False
@@ -191,6 +204,8 @@ class DiscreteEnvironment:
                 self.visible_data = json.load(f)
             self.all_objects_id = self.visible_data.keys()
             self.all_objects = [x.split('|')[0] for x in self.all_objects_id]
+            if self.chosen_targets == None:
+                self.chosen_targets = self.all_objects
             #读h5py数据.没有读到的报错还没写
             for type_, image_ in self.obs_loader.items():
                 if image_ is not None:
@@ -208,12 +223,14 @@ class DiscreteEnvironment:
         #Initialize position
         self.set_agent_state(agent_state, self.all_visible_states)
         self.start_state = copy.deepcopy(self.agent_state)
+        self.his_states = [self.start_state for _ in range(self.his_len)]
 
         self.last_action = None
         self.reward = 0
         self.done = False
         self.steps = 0
-        self.info = {}
+        self.info = dict(success = False)
+        
         return self.get_obs(True),\
                self.get_target_reper(self.target_str)
 
@@ -257,20 +274,31 @@ class DiscreteEnvironment:
 
     def get_obs(self, init = False):
         """返回obs。可能有多个，以初始化controller时的关键字为索引"""
-        return self.prepro_obs(
-            {k:v[str(self.agent_state)][:] for k,v in self.obs_loader.items()},
-            init
-        )
-        
-    def prepro_obs(self, obs, init = False):
-        """一个特殊的二次封装obs的函数，如果需要对obs尽心进一步预处理，
-        例如累计4帧图像数据，就写在这里"""
-        #暂时只支持处理n帧特征向量
-        for k in obs:
+        tmp = {}
+        for k,v in self.obs_loader.items():
             if '|' in k:
-                obs[k] = np.tile(obs[k].squeeze(), (int(k.split("|")[1]))) if init\
-                         else np.append(obs[k][np.prod(obs[k].shape):], obs[k])
-        return obs
+                tmp.update({
+                    k:np.array(
+                        [v[str(s)][:] for s in self.his_states[:int(k.split('|')[1])]]
+                        )
+                })
+            else:
+                tmp.update({k:v[str(self.agent_state)][:]})
+        return tmp
+        
+    # def prepro_obs(self, obs, init = False):
+    #     """一个特殊的二次封装obs的函数，如果需要对obs尽心进一步预处理，
+    #     例如累计4帧图像数据，就写在这里"""
+    #     #暂时只支持处理n帧特征向量
+    #     for k in obs:
+    #         if '|' in k:
+    #             if init:
+    #                 self.last_obs[k] = np.tile(obs[k].squeeze(), (int(k.split("|")[1])))
+    #                 #obs[k] = np.tile(obs[k].squeeze(), (int(k.split("|")[1]))) 
+    #             else:
+    #                 obs[k] = np.append(self.last_obs[k][np.prod(obs[k].shape):], obs[k])
+    #                 self.last_obs[k] = 
+    #     return obs
 
     def rotate(self, angle:int):
         """Rotate a angle. Positive angle for turn right. Negative angle for turn left.
@@ -342,7 +370,7 @@ class DiscreteEnvironment:
             raise Exception("Unsupport action")
 
         self.action_interpret(self.action_dict[action])
-        
+        self.his_states = [str(self.agent_state)] + self.his_states[1:]
         self.last_agent_state = copy.deepcopy(self.agent_state)
         self.steps += 1
         self.last_action = action
