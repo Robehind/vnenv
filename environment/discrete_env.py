@@ -12,9 +12,10 @@ class DiscreteEnvironment:
     """读取数据集，模拟交互，按照dict的组织和标识来返回数据和信息。
        所有数据都是用np封装的
        特点在于是通过动作的字符串来交互的。"""
-    grid_file_name = "grid.json"
-    graph_file_name = "graph.json"
+    #grid_file_name = "grid.json"
+    #graph_file_name = "graph.json"
     visible_file_name = "visible_object_map.json"
+    trans_file_name = 'trans.json'
     def __init__(
         self,
         offline_data_dir = '../thordata/mixed_offline_data',#包含所有房间文件夹的路径
@@ -47,7 +48,9 @@ class DiscreteEnvironment:
         move_angle = 45,
         horizon_angle = 30,
         chosen_scenes = ['FloorPlan1_physics'],#scene names random from
-        chosen_targets = None,#默认值为None时则无限制,这个表是针对env目前能加载的所有scene而言的
+        chosen_targets = None,
+        #默认值为None时取当前房间里有的里随机一个。
+        #人类必须自己保证这个列表里的目标合法，例如受glove支持，在房间中可以被找到，等等
         debug = False,
     ):
         self.actions = list(action_dict.keys())
@@ -55,10 +58,6 @@ class DiscreteEnvironment:
         self.reward_dict = reward_dict
         self.offline_data_dir = offline_data_dir
         self.max_steps = max_steps
-
-        #file loader
-        self.nx = importlib.import_module("networkx")
-        self.json_graph_loader = importlib.import_module("networkx.readwrite")
         
         self.debug = debug
         self.chosen_targets = chosen_targets
@@ -70,6 +69,7 @@ class DiscreteEnvironment:
         self.horizon_angle = horizon_angle
 
         #根据不同的绝对移动角度，x和z坐标的变化符合以下表格规律
+        #智能体面向z轴正方向，右手为x轴正方向时，角度为0度。向右转为正角度。
         self.move_list = [0, 1, 1, 1, 0, -1, -1, -1]
         self.move_list = [x*self.grid_size for x in self.move_list]
         # Allowed rotate angles
@@ -187,17 +187,10 @@ class DiscreteEnvironment:
             self.scene_name = scene_name
             s_path = os.path.join(self.offline_data_dir, self.scene_name)
             with open(
-                os.path.join(s_path, self.graph_file_name),"r",
+                os.path.join(s_path, self.trans_file_name),"r",
             ) as f:
-                graph_json = json.load(f)
-            self.graph = self.json_graph_loader.node_link_graph(graph_json).to_directed()
-            self.all_agent_states = [
-                x for x in list(self.graph.nodes()) 
-                if int(x.split('|')[2]) in self.rotations\
-                and int(x.split('|')[3]) in self.horizons\
-                and float(x.split('|')[0])%self.grid_size==0.0\
-                and float(x.split('|')[1])%self.grid_size==0.0\
-                ]
+                self.trans_data = json.load(f)
+            self.all_agent_states = list(self.trans_data.keys())
             with open(
                 os.path.join(s_path, self.visible_file_name),"r",
             ) as f:
@@ -215,9 +208,8 @@ class DiscreteEnvironment:
                 )
         #set target
         if target_str == None and not allow_no_target:
-            legal_list = list(set(self.all_objects).intersection(set(self.chosen_targets)))
-            target_str = random.choice(legal_list)
-        self.set_target(target_str)
+            target_str = random.choice(self.chosen_targets)
+        self.target_str = target_str
         self.all_visible_states = self.states_where_visible(self.target_str)
 
         #Initialize position
@@ -230,38 +222,27 @@ class DiscreteEnvironment:
         self.done = False
         self.steps = 0
         self.info = dict(success = False)
-        
+        #print(t2-t1)
         return self.get_obs(True),\
                self.get_target_reper(self.target_str)
 
     def set_agent_state(self, agent_state = None, ban_list = []):
-        """设置智能体的位姿。如果agent_state为None，则会随机选择一个不在banlist中的位姿
+        """设置智能体的位姿。如果agent_state为None，则会随机选择一个不在banlist中的位置
         """
         if agent_state == None:
-            legal_list = list(set(self.all_agent_states).difference(set(ban_list)))
-            agent_state = random.choice(legal_list)
+            #legal_list = list(set(self.all_agent_states).difference(set(ban_list)))
+            #agent_state = random.choice(legal_list)
+            while 1:
+                agent_state = get_state_from_str(random.choice(self.all_agent_states))
+                agent_state.rotation = random.choice(self.rotations)
+                agent_state.horizon = random.choice(self.horizons)
+                if str(agent_state) not in ban_list: break
         else:
             assert agent_state in self.all_agent_states
             assert agent_state not in ban_list
         if isinstance(agent_state, str):
             agent_state = get_state_from_str(agent_state)
         self.agent_state = agent_state
-    
-    def set_target(self, target_str):
-        """可以在外部调用的设置目标"""
-        if target_str == None:
-            self.target_str = target_str
-            return
-        #判断所设置目标的合法性
-        if not target_str in self.all_objects:
-            raise Exception("No \'%s\' in \'%s\'"%(target_str, self.scene_name))
-        for k, v in self.loader_support.items():
-            if not target_str in v:
-                raise Exception("Object \'%s\' unsupported by \'%s\'"%(target_str,k))
-        if not self.chosen_targets == None:
-            if not target_str in self.chosen_targets:
-                raise Exception("Object \'%s\' is not chosen"%target_str)
-        self.target_str = target_str
 
     def states_where_visible(self, target_reper):
         if target_reper == None:
@@ -285,20 +266,6 @@ class DiscreteEnvironment:
             else:
                 tmp.update({k:v[str(self.agent_state)][:]})
         return tmp
-        
-    # def prepro_obs(self, obs, init = False):
-    #     """一个特殊的二次封装obs的函数，如果需要对obs尽心进一步预处理，
-    #     例如累计4帧图像数据，就写在这里"""
-    #     #暂时只支持处理n帧特征向量
-    #     for k in obs:
-    #         if '|' in k:
-    #             if init:
-    #                 self.last_obs[k] = np.tile(obs[k].squeeze(), (int(k.split("|")[1])))
-    #                 #obs[k] = np.tile(obs[k].squeeze(), (int(k.split("|")[1]))) 
-    #             else:
-    #                 obs[k] = np.append(self.last_obs[k][np.prod(obs[k].shape):], obs[k])
-    #                 self.last_obs[k] = 
-    #     return obs
 
     def rotate(self, angle:int):
         """Rotate a angle. Positive angle for turn right. Negative angle for turn left.
@@ -328,20 +295,13 @@ class DiscreteEnvironment:
         abs_angle = (angle + self.agent_state.rotation + 360) % 360
         temp_rotation = self.agent_state.rotation
         self.agent_state.rotation = abs_angle
-        next_state = copy.deepcopy(self.agent_state)
-        #因为定死了movelist，所以这里的moveangle必须是45才行
-        index = next_state.rotation//45#self.move_angle
-        next_state.x += self.move_list[index%8]
-        next_state.z += self.move_list[(index+2)%8]
-        #当需要全方向移动时，graph里可能并没有保存这些转换关系
-        #但是如果查询一下面向这个方向时是否可以移动过去，那就说明可以转换
-        neighbors = self.graph.neighbors(str(self.agent_state))
-        self.agent_state.rotation = temp_rotation
-        if str(next_state) in neighbors:
-            self.agent_state.x, self.agent_state.z = next_state.x, next_state.z
+        if self.trans_data[str(self.agent_state)]:
+            self.agent_state.x += self.move_list[(abs_angle//45)%8] 
+            self.agent_state.z += self.move_list[(abs_angle//45+2)%8]
             self.last_opt_success = True
         else:
             self.last_opt_success = False
+        self.agent_state.rotation = temp_rotation
 
     def action_interpret(self, act_str):
         """翻译一个动作序列。"""
@@ -361,8 +321,6 @@ class DiscreteEnvironment:
                     break
 
     def step(self, action):
-        if self.target_str == None:
-            print("Warning: Didn\'t set target. Check target visibility will always be false")
 
         if self.done and not self.debug:
             raise Exception('Should not interact with env when env is done')
@@ -441,12 +399,18 @@ class DiscreteEnvironment:
     def best_path_len(self):
         """算最短路，用于计算spl."""
         #如果房间里有复数个目标，还要计算找出离当前位置最近的那一个。。。
+        #file loader
+        nx = importlib.import_module("networkx")
+        json_graph_loader = importlib.import_module("networkx.readwrite")
+        with open(os.path.join(self.offline_data_dir,self.scene_name,'graph.json'),'r') as f:
+            graph_json = json.load(f)
+        graph = json_graph_loader.node_link_graph(graph_json).to_directed()
         start_state = self.start_state
         best_path_len = 9999
         best_path = None
 
         for k in self.all_visible_states:
-            path = self.nx.shortest_path(self.graph, str(start_state), k)
+            path = nx.shortest_path(graph, str(start_state), k)
             path_len = len(path) - 1
             if path_len < best_path_len:
                 best_path = path
