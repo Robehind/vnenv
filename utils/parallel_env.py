@@ -121,8 +121,8 @@ class VecEnv:
     def step_wait(self):
         outs = [pipe.recv() for pipe in self.parent_pipes]
         self.waiting_step = False
-        _, rews, dones, success = zip(*outs)
-        return self.get_obs(), np.array(rews), np.array(dones), np.array(success)
+        _, rews, dones, info = zip(*outs)
+        return self.get_obs(), np.array(rews), np.array(dones), info
     
     def step(self, actions):
         self.step_async(actions)
@@ -187,7 +187,7 @@ def _subproc_worker(pipe, parent_pipe, env_fn, bufs, obs_shapes, obs_dtypes):
                 obs, reward, done, info = env.step(data)
                 if done:
                     obs, t_reper = env.reset()
-                pipe.send(((_write_bufs(obs), _write_bufs(t_reper)), reward, done, info['success']))
+                pipe.send(((_write_bufs(obs), _write_bufs(t_reper)), reward, done, info))
             elif cmd == 'render':
                 pipe.send(env.render())
             elif cmd == 'close':
