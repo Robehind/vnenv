@@ -30,7 +30,7 @@ def main():
         'env':getattr(environment, args.env),
     }
     chosen_scene_names = []
-    tmp = get_scene_names(args.train_scenes)
+    tmp = get_scene_names(args.test_scenes)
     for k in tmp:
         chosen_scene_names += k
     chosen_objects = []

@@ -7,7 +7,7 @@ import environment as env
 import optimizers
 import torch
 from tqdm import tqdm
-from utils.thordata_utils import get_scene_names
+from utils.thordata_utils import get_scene_names, random_divide
 import os
 from utils.parallel_env import make_envs, VecEnv
 from trainers.loss_functions import a2c_loss
@@ -16,7 +16,7 @@ from utils.mean_calc import ScalarMeanTracker
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a2c_gcn import args
+    from exp_args.a2c_demo_args import args
     #生成日志文件
     start_time = time.time()
     local_start_time_str = time.strftime(
@@ -58,11 +58,8 @@ def main():
         model.load_state_dict(torch.load(args.load_model_dir))
 
     #这里用于分配各个线程的环境可以加载的场景以及目标
-    #暂时就每个线程都加载一样的场景集合和物体
-    chosen_scene_names = []
-    tmp = get_scene_names(args.train_scenes)
-    for k in tmp:
-        chosen_scene_names += k
+    chosen_scene_names = get_scene_names(args.train_scenes)
+    scene_names_div, _ = random_divide(1000, chosen_scene_names, args.threads)
     chosen_objects = []
     for k in args.train_targets.keys():
         chosen_objects = chosen_objects + args.train_targets[k]
@@ -80,19 +77,21 @@ def main():
         print('agent created')
 
     #生成多线程环境，每个线程可以安排不同的房间或者目标
-    env_args = dict(
-        offline_data_dir = args.offline_data_dir,
-        action_dict = args.action_dict,
-        target_dict = args.target_dict,
-        obs_dict = args.obs_dict,
-        reward_dict = args.reward_dict,
-        max_steps = args.max_epi_length,
-        grid_size = args.grid_size,
-        rotate_angle = args.rotate_angle,
-        chosen_scenes = chosen_scene_names,
-        chosen_targets = chosen_objects
-    )
-    env_fns = [make_envs(env_args, creator['env']) for _ in range(args.threads)]
+    env_fns = []
+    for i in range(args.threads):
+        env_args = dict(
+            offline_data_dir = args.offline_data_dir,
+            action_dict = args.action_dict,
+            target_dict = args.target_dict,
+            obs_dict = args.obs_dict,
+            reward_dict = args.reward_dict,
+            max_steps = args.max_epi_length,
+            grid_size = args.grid_size,
+            rotate_angle = args.rotate_angle,
+            chosen_scenes = scene_names_div[i],
+            chosen_targets = chosen_objects
+        )
+        env_fns.append(make_envs(env_args, creator['env']))
     envs = VecEnv(env_fns)
 
     n_frames = 0
@@ -101,12 +100,6 @@ def main():
     n_epis = 0
     total_reward = 0
     success_num = 0
-
-    # exps={
-    #     'rewards':[],
-    #     'masks':[],
-    #     'action_idxs':[]
-    # }
     obses = {k:[] for k in envs.keys}
     loss_traker = ScalarMeanTracker()
     pbar = tqdm(total=args.total_train_frames)
@@ -121,7 +114,7 @@ def main():
             obses[k] = []
         for _ in range(args.nsteps):
             action, a_idx = agent.action(obs)
-            obs_new, r, done, success = envs.step(action)
+            obs_new, r, done, info = envs.step(action)
             for k in obses:
                 obses[k].append(obs[k])
             exps['action_idxs'].append(a_idx)
@@ -130,7 +123,8 @@ def main():
             obs = obs_new
             n_epis += done.sum()
             total_reward += r.sum()
-            success_num += success.sum()
+            for i in info:
+                success_num += i['success']
 
         _, v_final = agent.get_pi_v(obs)
         v_final = v_final.detach().cpu().numpy().reshape(-1)
