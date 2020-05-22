@@ -3,7 +3,7 @@ from .default_args import args
 args.update(
     train_scenes = {'kitchen':[25],},
     train_targets = {'bathroom':["Microwave"],},
-    test_scenes = {'kitchen':[1],},#{'bathroom':[31],},
+    test_scenes = {'kitchen':range(1,11),},#{'bathroom':[31],},
     test_targets = {'bathroom':["Microwave"],},
     action_dict = {
         'MoveAhead':['m0'],
@@ -28,11 +28,11 @@ args.update(
     optim_args = dict(lr = args.lr,),
     print_freq = 1000,
     max_epi_length = 100,
-    model_save_freq = 200000,
+    model_save_freq = 40000,
     nsteps = 10,
     verbose = False,
     gpu_ids = [0],
-    #load_model_dir = '../check_points/DemoModel_100006_2020-05-16_21-35-19.dat',
+    load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
     results_json = "result_demo.json"
 )
 model_args_dict = {'action_size' : len(args.action_dict)}

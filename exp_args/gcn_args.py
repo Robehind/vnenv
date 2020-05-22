@@ -12,7 +12,7 @@ args.update(
         #'BackOff':['m180']
         'Done':None,
     },
-    state_dict = {
+    obs_dict = {
         'fc|4':'resnet50_fc.hdf5',
         'score':'resnet50_score.hdf5'
         },
