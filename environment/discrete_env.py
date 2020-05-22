@@ -10,8 +10,7 @@ from .agent_pose_state import get_state_from_str
 #改成私有变量
 class DiscreteEnvironment:
     """读取数据集，模拟交互，按照dict的组织和标识来返回数据和信息。
-       所有数据都是用np封装的
-       特点在于是通过动作的字符串来交互的。"""
+       所有数据都是用np封装的"""
     #grid_file_name = "grid.json"
     #graph_file_name = "graph.json"
     visible_file_name = "visible_object_map.json"
@@ -115,11 +114,9 @@ class DiscreteEnvironment:
         #不同的目标表示可能会导致在每次重置环境时读取新的状态表示文件,未来再改善，应该写到reset里
         self.target_reper_info = {}
         self.tLoader = None
-        self.loader_support = {} #scene里有的object未必在reper里就有
         for str_ in self.target_type:
             if str_ in ['glove', 'fasttext', 'onehot']:
                 self.tLoader = h5py.File(self.target_dict[str_], "r",)
-                self.loader_support[str_] = self.tLoader[str_].keys()
                 tmp = self.tLoader[str_][list(self.tLoader[str_].keys())[0]][:]
                 self.target_reper_info.update({str_:(tmp.shape, tmp.dtype)})
         
@@ -221,7 +218,13 @@ class DiscreteEnvironment:
         self.reward = 0
         self.done = False
         self.steps = 0
-        self.info = dict(success = False)
+        self.info = dict(
+            success = False, 
+            scene_name = self.scene_name, 
+            target = self.target_str,
+            agent_done = False,
+            best_len = self.best_path_len()[1],
+            )
         #print(t2-t1)
         return self.get_obs(True),\
                self.get_target_reper(self.target_str)
@@ -354,6 +357,7 @@ class DiscreteEnvironment:
         elif action == 'Done':
             event = 'SuccessDone' if self.target_visiable() else 'FalseDone'
             done = True
+            self.info['agent_done'] = True
             self.info['success'] = (event == 'SuccessDone')
         
         if self.steps == self.max_steps:
@@ -402,12 +406,14 @@ class DiscreteEnvironment:
         #file loader
         nx = importlib.import_module("networkx")
         json_graph_loader = importlib.import_module("networkx.readwrite")
-        with open(os.path.join(self.offline_data_dir,self.scene_name,'graph.json'),'r') as f:
+        with open(os.path.join(self.offline_data_dir,self.scene_name,'threeACT_graph.json'),'r') as f:
             graph_json = json.load(f)
         graph = json_graph_loader.node_link_graph(graph_json).to_directed()
         start_state = self.start_state
         best_path_len = 9999
         best_path = None
+        legal_states = list(graph.nodes())
+        self.all_visible_states = [x for x in self.all_visible_states if x in legal_states]
 
         for k in self.all_visible_states:
             path = nx.shortest_path(graph, str(start_state), k)
