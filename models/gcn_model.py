@@ -34,7 +34,7 @@ class ScenePriorsModel(nn.Module):
         # Merge word_embedding(300) + observation(512) + gcn(512)
         self.navi_net = nn.Linear(
             target_embed_sz + 512 + 512, 512)
-
+        self.navi_hid = nn.Linear(512,512)
         #output
         self.actor_linear = nn.Linear(512, action_sz)
         self.critic_linear = nn.Linear(512, 1)
@@ -60,6 +60,7 @@ class ScenePriorsModel(nn.Module):
         xyz = torch.cat((x, y, z), dim = 1)
         xyz = self.navi_net(xyz)
         xyz = F.relu(xyz, True)
+        xyz = F.relu(self.navi_hid(xyz), True)
         return dict(
             policy=self.actor_linear(xyz),
             value=self.critic_linear(xyz)
