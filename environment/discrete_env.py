@@ -174,7 +174,8 @@ class DiscreteEnvironment:
         scene_name = None, 
         target_str = None, 
         agent_state = None, 
-        allow_no_target = False
+        allow_no_target = False,
+        calc_best_len = False
         ):
         if scene_name == None:
             scene_name = random.choice(self.chosen_scenes)
@@ -223,8 +224,9 @@ class DiscreteEnvironment:
             scene_name = self.scene_name, 
             target = self.target_str,
             agent_done = False,
-            best_len = self.best_path_len()[1],
+            #best_len = self.best_path_len()[1],
             )
+        if calc_best_len: self.info.update(dict(best_len = self.best_path_len()[1]))
         #print(t2-t1)
         return self.get_obs(True),\
                self.get_target_reper(self.target_str)

@@ -1,10 +1,10 @@
 from .default_args import args
 
 args.update(
-    train_scenes = {'kitchen':[25],},
-    train_targets = {'bathroom':["Microwave"],},
-    test_scenes = {'kitchen':range(1,11),},#{'bathroom':[31],},
-    test_targets = {'bathroom':["Microwave"],},
+    train_scenes = {'kitchen':'25',},
+    train_targets = {'kitchen':["Microwave"],},
+    test_scenes = {'kitchen':'25',},#{'bathroom':[31],},
+    test_targets = {'kitchen':["Microwave"],},
     action_dict = {
         'MoveAhead':['m0'],
         'TurnLeft':['r-90'],
@@ -21,10 +21,13 @@ args.update(
     total_train_frames = 40000,
     total_eval_epi = 1000,
     threads = 4,
-    log_title = 'A2CDemoModel',
+    exp_name = 'A2CDemoModel',
     optimizer = 'Adam',
     model = 'DemoModel',
     agent = 'A2CAgent',
+    runner = 'A2CRunner',
+    loss_func = 'a2c_loss',
+    trainer = 'a2c_train',
     optim_args = dict(lr = args.lr,),
     print_freq = 1000,
     max_epi_length = 100,
@@ -32,7 +35,6 @@ args.update(
     nsteps = 10,
     verbose = False,
     gpu_ids = [0],
-    load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
     results_json = "result_demo.json"
 )
 model_args_dict = {'action_size' : len(args.action_dict)}

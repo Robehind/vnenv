@@ -12,10 +12,11 @@ from utils.parallel_env import make_envs, VecEnv
 from trainers.loss_functions import a2c_loss
 import numpy as np
 from utils.mean_calc import ScalarMeanTracker
+from utils.model_search import search_newest_model
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a2c_gcn import args
+    from exp_args.a2c_demo_args import args
 
     #确认gpu可用情况
     if args.gpu_ids == -1:
@@ -35,14 +36,16 @@ def main():
     #生成全局模型并初始化优化算法
     model = creator['model'](**args.model_args)
     if model is not None:
-        #optimizer.share_memory()
         print(model)
     # 读取存档点，读取最新存档模型的参数到shared_model。其余线程会自动使用sync函数来同步
     if args.load_model_dir is not '':
         print("load %s"%args.load_model_dir)
         model.load_state_dict(torch.load(args.load_model_dir))
     else:
-        print('Warining: load_model_dir didn\'t exist. Testing model with init params')
+        find_path = search_newest_model(args.exps_dir, args.exp_name)
+        if find_path is not None:
+            print("Searched the newset model: %s"%find_path)
+        model.load_state_dict(torch.load(find_path))
 
     #这里用于分配各个线程的环境可以加载的场景以及目标
     chosen_scene_names = get_scene_names(args.test_scenes)
@@ -75,7 +78,7 @@ def main():
             chosen_targets = chosen_objects
         )
         env_fns.append(make_envs(env_args, creator['env']))
-    envs = VecEnv(env_fns)
+    envs = VecEnv(env_fns, eval_mode = True)
 
 
     n_epis_thread = [0 for _ in range(args.threads)]

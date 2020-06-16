@@ -3,6 +3,7 @@ import time
 import trainers
 import models
 import agents
+import runners
 import environment as env
 import optimizers
 import torch
@@ -10,32 +11,27 @@ from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide
 import os
 from utils.parallel_env import make_envs, VecEnv
-from trainers.loss_functions import a2c_loss
 import numpy as np
-from utils.mean_calc import ScalarMeanTracker
-#TODO 输出loss
 def main():
     #读取参数
     from exp_args.a2c_demo_args import args
-    #生成日志文件
+    #生成实验文件夹
     start_time = time.time()
-    local_start_time_str = time.strftime(
-        "%Y-%m-%d_%H-%M-%S", time.localtime(start_time)
+    time_str = time.strftime(
+        "%y%m%d_%H%M%S", time.localtime(start_time)
     )
-
-    if args.log_dir is not None:
-        tb_log_dir = args.log_dir + "/" + args.log_title + "-" + local_start_time_str
-        log_writer = SummaryWriter(log_dir=tb_log_dir)
-    else:
-        log_writer = SummaryWriter(comment=args.log_title)
-
+    args.exp_dir = os.path.join(args.exps_dir, args.exp_name + '-' + time_str)
+    if not os.path.exists(args.exp_dir):
+        os.makedirs(args.exp_dir)
+    #保存本次实验的参数
+    args.save_args(os.path.join(args.exp_dir, 'args.json'))
     #确认gpu可用情况
     if args.gpu_ids == -1:
         args.gpu_ids = [-1]
     else:
-        #torch.cuda.manual_seed(args.seed)
         assert torch.cuda.is_available()
     
+    #TODO 在a2c中暂时只调用一块gpu用于训练，多线程训练可能需要调用pytorch本身的api
     gpu_id = args.gpu_ids[0]
 
     #动态载入构造函数
@@ -43,9 +39,11 @@ def main():
         'model':getattr(models, args.model),
         'agent':getattr(agents, args.agent),
         'env':getattr(env, args.env),
-        'optimizer':getattr(optimizers, args.optimizer)
+        'optimizer':getattr(optimizers, args.optimizer),
+        'runner':getattr(runners, args.runner)
     }
-    #trainer = getattr(trainers, args.trainer)
+    trainer = getattr(trainers, args.trainer)
+    loss_func = getattr(trainers, args.loss_func)
 
     #生成全局模型并初始化优化算法
     model = creator['model'](**args.model_args)
@@ -94,79 +92,26 @@ def main():
         env_fns.append(make_envs(env_args, creator['env']))
     envs = VecEnv(env_fns)
 
-    n_frames = 0
-    total_epis = 0
+    runner = creator['runner'](
+        args.nsteps,
+        args.threads,
+        envs,
+        agent
+    )
 
-    n_epis = 0
-    total_reward = 0
-    success_num = 0
-    obses = {k:[] for k in envs.keys}
-    loss_traker = ScalarMeanTracker()
-    pbar = tqdm(total=args.total_train_frames)
-    obs = envs.reset()
-    while n_frames < args.total_train_frames:
-        exps = {
-            'rewards':[],
-            'masks':[],
-            'action_idxs':[]
-        }
-        for k in obses:
-            obses[k] = []
-        for _ in range(args.nsteps):
-            action, a_idx = agent.action(obs)
-            obs_new, r, done, info = envs.step(action)
-            for k in obses:
-                obses[k].append(obs[k])
-            exps['action_idxs'].append(a_idx)
-            exps['rewards'].append(r)
-            exps['masks'].append(1 - done)
-            obs = obs_new
-            n_epis += done.sum()
-            total_reward += r.sum()
-            for i in info:
-                success_num += i['success']
-
-        _, v_final = agent.get_pi_v(obs)
-        v_final = v_final.detach().cpu().numpy().reshape(-1)
-        for k in obses:
-            obses[k] = np.array(obses[k]).reshape(-1, *obses[k][0][0].shape)
-        pi_batch, v_batch = agent.get_pi_v(obses)
-        loss = a2c_loss(v_batch, pi_batch, v_final, exps, gpu_id)
-        optimizer.zero_grad()
-        loss['total_loss'].backward()
-        for k in loss:
-            loss_traker.add_scalars({k:loss[k].item()})
-        optimizer.step()
-
-        #记录、保存、输出
-        pbar.update(args.nsteps * args.threads)
-        n_frames += args.nsteps * args.threads
-        
-        if n_frames % args.print_freq == 0:
-            total_epis += n_epis
-            log_writer.add_scalar("n_frames", n_frames, total_epis)
-            log_writer.add_scalar("epi length", args.print_freq/n_epis, n_frames)
-            log_writer.add_scalar("total reward", total_reward/n_epis, n_frames)
-            log_writer.add_scalar("success", success_num/n_epis, n_frames)
-            for k,v in loss_traker.pop_and_reset().items():
-                log_writer.add_scalar(k, v, n_frames)
-            n_epis, total_reward, success_num = 0,0,0
-
-        if n_frames % args.model_save_freq == 0:
-            if not os.path.exists(args.save_model_dir):
-                os.makedirs(args.save_model_dir)
-            state_to_save = model.state_dict()
-            save_path = os.path.join(
-                args.save_model_dir,
-                "{0}_{1}_{2}.dat".format(
-                    args.log_title, n_frames, local_start_time_str
-                ),
-            )
-            torch.save(state_to_save, save_path)
-    envs.close()
-    log_writer.close()
-    pbar.close()
-
+    #初始化TX
+    tx_writer = SummaryWriter(log_dir = args.exp_dir)
+    #training
+    trainer(
+        args,
+        agent,
+        envs,
+        runner,
+        optimizer,
+        loss_func,
+        tx_writer
+    )
+    
 if __name__ == "__main__":
     main()
 

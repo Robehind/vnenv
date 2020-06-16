@@ -63,7 +63,7 @@ def make_envs(env_args, env_class):
 
 class VecEnv:
     closed = False
-    def __init__(self, env_fns, context='spawn'):
+    def __init__(self, env_fns, context='spawn', eval_mode = False):
         """
         If you don't specify observation_space, we'll have to create a dummy
         environment to get it.
@@ -93,7 +93,8 @@ class VecEnv:
                             env_fn, 
                             data_buf, 
                             self.shapes, 
-                            self.dtypes
+                            self.dtypes,
+                            eval_mode
                             ))
             proc.daemon = True
             self.procs.append(proc)
@@ -165,7 +166,7 @@ class VecEnv:
         return dict_to_obs(result)
 
 
-def _subproc_worker(pipe, parent_pipe, env_fn, bufs, obs_shapes, obs_dtypes):
+def _subproc_worker(pipe, parent_pipe, env_fn, bufs, obs_shapes, obs_dtypes, eval_mode):
     """
     Control a single environment instance using IPC and
     shared memory.
@@ -181,12 +182,12 @@ def _subproc_worker(pipe, parent_pipe, env_fn, bufs, obs_shapes, obs_dtypes):
         while True:
             cmd, data = pipe.recv()
             if cmd == 'reset':
-                obs, t_reper = env.reset()
+                obs, t_reper = env.reset(calc_best_len = eval_mode)
                 pipe.send((_write_bufs(obs), _write_bufs(t_reper)))
             elif cmd == 'step':
                 obs, reward, done, info = env.step(data)
                 if done:
-                    obs, t_reper = env.reset()
+                    obs, t_reper = env.reset(calc_best_len = eval_mode)
                 pipe.send(((_write_bufs(obs), _write_bufs(t_reper)), reward, done, info))
             elif cmd == 'render':
                 pipe.send(env.render())

@@ -8,15 +8,17 @@ args_dict = dict(
     total_train_frames = 6e3,#指定训练多少frames
     max_epi_length = 100,#每个episode的最大步长，即agent在episode中的最大行动数
     total_eval_epi = 1000,#指定测试时测试多少个episode
-    print_freq = 1000,#每进行n个episode，就向tensorboardx输出一次训练信息
+    print_freq = 1000,#每进行n个frames，就向tensorboardx输出一次训练信息
     model_save_freq = 10000,#每进行n个episode，就保存一次模型参数
     results_json = 'result.json',#测试完成后结果输出到哪个文件
     log_title = 'A3CTrain',#指定tensorboardx日志文件的抬头
     save_model_dir = '../check_points',#保存模型的路径
     load_model_dir = '',#要读取的模型参数的完整路径，包括文件名
     log_dir = '../TXlog',#tensorboardx日志文件的生成位置
+    exps_dir = '../EXPS',#保存所有实验文件夹的路径
+    exp_name = 'demo_exp',#将用于生成本次实验的实验文件夹的文件名，因此尽量不要包含特殊符号
+    exp_dir = '',#单次实验的完整路径，会根据时间自动生成
     nsteps = 5,#更新梯度的频率，每n步进行一次loss计算并更新梯度
-    #history_length = 1,#环境提供的历史状态的长度
     threads = 4,#线程数
     offline_data_dir = '../thordata/mixed_offline_data',#数据集的位置，该路径下应该是那些FloorPlan开头的文件夹才对
     lr = 0.0002,#learning rate
@@ -24,11 +26,12 @@ args_dict = dict(
     #componets args 
     #决定要调用的环境、智能体等等，需要新增时，写到对应的模组下，并在__init__中 import
     #直接写类名或函数名
-    trainer = 'a3c_train',
-    tester = 'a3c_eval',
-    loss_func = 'a3c_loss',#没用啊....
+    trainer = 'a2c_train',
+    tester = 'a2c_eval',
+    loss_func = 'a2c_loss',#没用啊....
     model = 'LiteModel',#需要的参数见下
     agent = 'BasicAgent',
+    runner = 'A2CRunner',#用于指导环境和智能体交互产生数据的类
     optimizer = 'SGD',#需要的参数见下
     env = 'DiscreteEnvironment',
     episode = 'BasicEpisode',
@@ -68,17 +71,17 @@ args_dict = dict(
     #data args
     #指定训练用的场景。例如厨房用1-20这20个房间作为训练集，则值写为range(1,21)
     train_scenes = {
-        'kitchen':range(1,21),
-        'living_room':range(1,21),
-        'bedroom':range(1,21),
-        'bathroom':range(1,21),
+        'kitchen':'1-20',
+        'living_room':'1-20',
+        'bedroom':'1-20',
+        'bathroom':'1-20',
     },
     #指定测试用的场景。
     test_scenes = {
-        'kitchen':range(21,31),
-        'living_room':range(21,31),
-        'bedroom':range(21,31),
-        'bathroom':range(21,31),
+        'kitchen':'21-30',
+        'living_room':'21-30',
+        'bedroom':'21-30',
+        'bathroom':'21-30',
     },
     #指定训练选择的目标的字符串
     train_targets = {

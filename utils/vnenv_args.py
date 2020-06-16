@@ -1,3 +1,5 @@
+import json
+
 class VNENVargs:
     def __init__(self, args_dict = None, **kwargs):
         '''注意kwargs中的参数会覆盖args_dict中的'''
@@ -12,9 +14,13 @@ class VNENVargs:
             for k in kwargs:
                 setattr(self, k, kwargs[k])
 
+    def save_args(self, path):
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(self.__dict__, f, indent=4)
+
 if __name__ == "__main__":
-    args = VNENVargs(dict(vvv=1), a = 1, s= 2, vvv = 3)
-    print(args.__dict__)
+    args = VNENVargs(a = 1, s= 2, vsvv = 3)
+    args.save_args('./test.json')
 
 
 

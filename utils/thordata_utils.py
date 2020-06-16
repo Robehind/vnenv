@@ -1,9 +1,10 @@
 import random
 def get_scene_names(train_scenes):
-    
-    return [
-        [make_scene_name(k, i) for i in train_scenes[k]] for k in train_scenes.keys() 
-    ]
+    tmp = []
+    for k in train_scenes.keys():
+        ss = [int(x) for x in train_scenes[k].split('-')]
+        tmp.append([make_scene_name(k, i) for i in range(ss[0], ss[-1]+1)])
+    return tmp
 
 def make_scene_name(scene_type, num):
     mapping = {"kitchen":'', "living_room":'2', "bedroom":'3', "bathroom":'4'}
@@ -39,5 +40,10 @@ def random_divide(total_epi, chosen_scenes, n):
     return out, epi_nums
 
 if __name__ == "__main__":
+    train_scenes = {
+        'kitchen':'1-20',
+        'living_room':'5',
+    }
+    print(get_scene_names(train_scenes))
     cc = [[1],[2,3,4,5],[6,7,8,9,10,11,12]]
     print(random_divide(100,cc, 7))
