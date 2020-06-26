@@ -197,6 +197,11 @@ class DiscreteEnvironment:
             self.all_objects = [x.split('|')[0] for x in self.all_objects_id]
             if self.chosen_targets == None:
                 self.chosen_targets = self.all_objects
+            else:
+                #TODO 这样可能会慢，后面来优化
+                self.chosen_targets = list(
+                    set(self.chosen_targets).intersection(set(self.all_objects))
+                    )
             #读h5py数据.没有读到的报错还没写
             for type_, image_ in self.obs_loader.items():
                 if image_ is not None:

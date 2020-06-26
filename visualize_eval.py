@@ -1,116 +1,116 @@
+import cv2
 import time
-import json
-import testers
-import episodes
+import trainers
 import models
 import agents
-import environment #as env
+import environment as ENV
+import optimizers
 import torch
 from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide
-
+import os
+from trainers.loss_functions import a2c_loss
+import numpy as np
+from utils.mean_calc import ScalarMeanTracker
+from utils.model_search import search_newest_model
+from utils.env_wrapper import SingleEnv
+#TODO 输出loss
 def main():
     #读取参数
-    from exp_args.demo_args import args
-
-    args.gpu_id = -1
+    from exp_args.a3c_args import args
+    #args.exp_name = '123'
+    args.obs_dict.update(dict(image='images.hdf5'))
+    #print(args.obs_dict)
+    args.agent = 'A3CAgent'
     args.threads = 1
-    args.visualize = True,
-    args.obs_dict.update(dict(image = 'images.hdf5'))
-
-    #查看载入模型是否存在
-    if args.load_model_dir == '':
-        print('Warining: load_model_dir didn\'t exist. Testing model with init params')
-    
+    args.gpu_ids = -1
+    gpu_id = -1
     #动态载入构造函数
     creator = {
         'model':getattr(models, args.model),
-        'episode':getattr(episodes, args.episode),
         'agent':getattr(agents, args.agent),
-        'env':getattr(environment, args.env),
+        'env':getattr(ENV, args.env),
     }
-    chosen_scene_names = []
-    tmp = get_scene_names(args.test_scenes)
-    for k in tmp:
-        chosen_scene_names += k
+    #生成全局模型并初始化优化算法
+    model = creator['model'](**args.model_args)
+    if model is not None:
+        print(model)
+    # 读取存档点，读取最新存档模型的参数到shared_model。其余线程会自动使用sync函数来同步
+    if args.load_model_dir is not '':
+        print("load %s"%args.load_model_dir)
+        model.load_state_dict(torch.load(args.load_model_dir))
+    else:
+        find_path = search_newest_model(args.exps_dir, args.exp_name)
+        if find_path is not None:
+            print("Searched the neweset model: %s"%find_path)
+            model.load_state_dict(torch.load(find_path))
+        else:
+            print("Can't find a neweset model. Load Nothing.")
+
+    #这里用于分配各个线程的环境可以加载的场景以及目标
+    chosen_scene_names = get_scene_names(args.test_scenes)
+    scene_names_div, _ = random_divide(args.total_eval_epi, chosen_scene_names, args.threads)
     chosen_objects = []
     for k in args.test_targets.keys():
         chosen_objects = chosen_objects + args.test_targets[k]
-
-    epi_num = args.total_eval_epi
-    gpu_id = -1
-
-    #initialize env and agent
-
-    model = creator['model'](**args.model_args)
-    
-    #加载模型参数
-    if args.load_model_dir != "":
-        saved_state = torch.load(
-            args.load_model_dir, map_location=lambda storage, loc: storage
-        )
-        print("load %s"%args.load_model_dir)
-        model.load_state_dict(saved_state)
-
+    #生成多线程环境，每个线程可以安排不同的房间或者目标
     agent = creator['agent'](
         list(args.action_dict.keys()),
-        list(args.obs_dict.keys()),
         model,
         gpu_id
     )
-    env = creator['env'](
-        args.offline_data_dir,
-        args.action_dict,
-        args.target_dict,
-        args.obs_dict,
-        args.reward_dict,
-        max_steps = args.max_epi_length,
-        grid_size = args.grid_size,
-        rotate_angle = args.rotate_angle,
-        chosen_scenes = chosen_scene_names,
-        chosen_targets = chosen_objects
-    )
-    #initialize a episode
-    epi = creator['episode'](
-        agent,
-        env,
-        verbose = args.verbose,
-        visualize = True,
-    )
     if args.verbose:
-        print('Created all componets')
+        print('agent created')
 
-    count = 0
+    env = creator['env'](
+            offline_data_dir = args.offline_data_dir,
+            action_dict = args.action_dict,
+            target_dict = args.target_dict,
+            obs_dict = args.obs_dict,
+            reward_dict = args.reward_dict,
+            max_steps = args.max_epi_length,
+            grid_size = args.grid_size,
+            rotate_angle = args.rotate_angle,
+            chosen_scenes = scene_names_div[0],
+            chosen_targets = chosen_objects
+        )
+    env = SingleEnv(env, True)
+    eplen = 0
+    ep_r = 0
 
-    while count < epi_num:
-        #每一次循环为一次episode
-        #episode重置
-        target = input("Input a target:")
-        epi.new_episode(target = target)#场景会重新随机选，目标也会随机选
-        if args.verbose:
-            print('new epi created')
-            print('best path length: %s'%(env.best_path_len()))
+    obs = env.reset()
+    print(f"heading {env.env.target_str}")
+    while 1:
         
-        # Train on the new episode.
-        while not epi.done:
-            
-            # Run episode for num_steps or until player is done.
-            epi.get_nstep_exps(args.max_epi_length)
-            epi.clear_exps()
-                #agent.clear_exps()
-
-        count+=1
-
-        results = {
-            "agent_done": agent.done,#记录智能体是否提出了done这个动作
-            "ep_length": epi.length,
-            "success": epi.success,
-            "total_reward":epi.total_reward,
-            "spl":epi.compute_spl()
-        }
-        print(results)
-        epi.end_episode()
-
+        pic = obs['image'][:]
+        #RGB to BGR
+        pic = pic[:,:,::-1]
+        cv2.imshow("Env", pic)
+        p_key = cv2.waitKey(0)
+        if p_key == 27:
+            break
+        action, _ = agent.action(obs)
+        print(action)
+        obs_new, r, done, info = env.step(action)
+        obs = obs_new
+        ep_r += r
+        if not info['agent_done']: eplen += 1
+        if done:
+            print({
+                'eplen':eplen,
+                'success':info['success'],
+                'spl':info['success']*info['best_len']/eplen,
+                'reward':ep_r
+            })
+            eplen = 0
+            ep_r = 0
+            pic = obs['image'][:]
+            #RGB to BGR
+            pic = pic[:,:,::-1]
+            cv2.imshow("Env", pic)
+            p_key = cv2.waitKey(0)
+            obs = env.reset()
+            print(f"Heading {env.env.target_str}")
 
 if __name__ == "__main__":
     main()

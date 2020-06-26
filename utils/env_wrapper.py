@@ -56,10 +56,36 @@ _NP_TO_CT = {np.dtype(np.float32): ctypes.c_float,
              np.dtype(np.int8): ctypes.c_int8,
              np.dtype(np.uint8): ctypes.c_char,
              np.dtype(np.bool): ctypes.c_bool}
+
 def make_envs(env_args, env_class):
     def _env_func():
         return env_class(**env_args)
     return _env_func
+
+class SingleEnv:
+    def __init__(self, env, eval_mode = False):
+        self.env = env
+        self.eval_mode = eval_mode
+        self.t_reper = None
+        self.keys, self.shapes, self.dtypes = split_data_info(env.data_info)
+
+    def reset(self):
+        obs, self.t_reper = self.env.reset(calc_best_len = self.eval_mode)
+        obs.update(self.t_reper)
+        return obs
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        obs.update(self.t_reper)
+        return obs, reward, done, info
+
+    def get_obs(self):
+        obs = self.env.get_obs()
+        obs.update(self.t_reper)
+        return obs
+
+    def get_target_reper(self):
+        return self.t_reper
 
 class VecEnv:
     closed = False
@@ -188,7 +214,8 @@ def _subproc_worker(pipe, parent_pipe, env_fn, bufs, obs_shapes, obs_dtypes, eva
                 obs, reward, done, info = env.step(data)
                 if done:
                     obs, t_reper = env.reset(calc_best_len = eval_mode)
-                pipe.send(((_write_bufs(obs), _write_bufs(t_reper)), reward, done, info))
+                    _write_bufs(t_reper)
+                pipe.send((_write_bufs(obs), reward, done, info))
             elif cmd == 'render':
                 pipe.send(env.render())
             elif cmd == 'close':

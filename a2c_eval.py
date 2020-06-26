@@ -8,7 +8,7 @@ import torch
 from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide
 import os
-from utils.parallel_env import make_envs, VecEnv
+from utils.env_wrapper import make_envs, VecEnv
 from trainers.loss_functions import a2c_loss
 import numpy as np
 from utils.mean_calc import ScalarMeanTracker
@@ -16,8 +16,8 @@ from utils.model_search import search_newest_model
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a2c_demo_args import args
-
+    from exp_args.a3c_demo_args import args
+    args.agent = 'A2CAgent'
     #确认gpu可用情况
     if args.gpu_ids == -1:
         args.gpu_ids = [-1]
@@ -44,8 +44,10 @@ def main():
     else:
         find_path = search_newest_model(args.exps_dir, args.exp_name)
         if find_path is not None:
-            print("Searched the newset model: %s"%find_path)
-        model.load_state_dict(torch.load(find_path))
+            print("Searched the neweset model: %s"%find_path)
+            model.load_state_dict(torch.load(find_path))
+        else:
+            print("Can't find a neweset model. Load Nothing.")
 
     #这里用于分配各个线程的环境可以加载的场景以及目标
     chosen_scene_names = get_scene_names(args.test_scenes)
@@ -141,6 +143,7 @@ def main():
     import json
     with open(args.results_json, "w") as fp:
         json.dump(logger, fp, sort_keys=True, indent=4)
+    print(f'Results write into {args.results_json}')
 
     
 

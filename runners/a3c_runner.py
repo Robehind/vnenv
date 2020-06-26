@@ -1,24 +1,25 @@
 import numpy as np
+import torch
 #runner这边要屏蔽torch的相关吗
-class A2CRunner:
+class A3CRunner:
     """生成n steps的数据，同时记录一些数据到自己的变量里"""
-    def __init__(self, nsteps, threads, envs, agent):
+    def __init__(self, nsteps, threads, env, agent):
         self.rewards = []
         self.masks = []
         self.action_idxs = []
         self.nsteps = nsteps
         self.threads = threads
-        self.envs = envs
+        self.env = env
         self.agent = agent
 
         self.total_epis = 0
         self.total_reward = 0
         self.total_steps = 0
         self.num_success = 0
-        self.thread_reward = [0 for _ in range(threads)]
-        self.thread_steps = [0 for _ in range(threads)]
+        self.thread_reward = 0
+        self.thread_steps = 0
 
-        self.last_obs = envs.reset()
+        self.last_obs = self.env.reset()
 
     def run(self):
         exps = {
@@ -26,33 +27,39 @@ class A2CRunner:
             'masks':[],
             'action_idxs':[]
         }
-        obses = {k:[] for k in self.envs.keys}
+        obses = {k:[] for k in self.env.keys}
+        self.agent.clear_mems()
         for _ in range(self.nsteps):
             action, a_idx = self.agent.action(self.last_obs)
-            obs_new, r, done, info = self.envs.step(action)
-            for k in obses:
-                obses[k].append(self.last_obs[k])
+            obs_new, r, done, info = self.env.step(action)
             exps['action_idxs'].append(a_idx)
             exps['rewards'].append(r)
             exps['masks'].append(1 - done)
+            for k in obses:
+                obses[k].append(self.last_obs[k])
+            
+            self.thread_reward += r
+            self.thread_steps += 1
+            
+            if done:
+                self.total_epis += 1
+                self.num_success += info['success']
+                self.total_reward += self.thread_reward
+                self.total_steps += self.thread_steps
+                self.thread_steps = 0
+                self.thread_reward = 0
+                obs_new = self.env.reset()
+                self.agent.reset_hidden()
             self.last_obs = obs_new
-            self.total_epis += done.sum()
-            for i in range(self.threads):
-                self.thread_reward[i] += r[i]
-                self.thread_steps[i] += 1
-                self.num_success += info[i]['success']
-                if done[i]:
-                    self.total_reward += self.thread_reward[i]
-                    self.total_steps += self.thread_steps[i]
-                    self.thread_steps[i] = 0
-                    self.thread_reward[i] = 0
-        _, v_final = self.agent.get_pi_v(self.last_obs)
-        v_final = v_final.detach().cpu().numpy().reshape(-1)
+        model_out = self.agent.model_forward(self.last_obs)
+        v_final = model_out['value']
+        v_final = v_final.detach().cpu().item()
         for k in obses:
-            obses[k] = np.array(obses[k]).reshape(-1, *obses[k][0][0].shape)
-        pi_batch, v_batch = self.agent.get_pi_v(obses)
-
-        return pi_batch, v_batch, v_final, exps
+            obses[k] = np.array(obses[k]).reshape(-1, *obses[k][0].shape)
+        out = self.agent.model_forward(obses, True)
+        #pi_batch = torch.cat(self.agent.pi_batch, dim = 0)
+        #v_batch = torch.cat(self.agent.v_batch, dim = 0)
+        return out['policy'], out['value'], v_final, exps
     
     def eval_run(self):
         pass

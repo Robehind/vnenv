@@ -10,7 +10,7 @@ import torch
 from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide
 import os
-from utils.parallel_env import make_envs, VecEnv
+from utils.env_wrapper import make_envs, VecEnv
 import numpy as np
 def main():
     #读取参数
@@ -61,11 +61,13 @@ def main():
     chosen_objects = []
     for k in args.train_targets.keys():
         chosen_objects = chosen_objects + args.train_targets[k]
+
+    #初始化各个对象
     optimizer = creator['optimizer'](
         model.parameters(),
         **args.optim_args
     )
-    #生成多线程环境，每个线程可以安排不同的房间或者目标
+
     agent = creator['agent'](
         list(args.action_dict.keys()),
         model,
