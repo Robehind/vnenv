@@ -1,8 +1,9 @@
 import time
 import random
 import torch
-from .loss_functions import savn_loss
 from .train_util import get_params, transfer_gradient_to_shared, SGD_step
+from utils.mean_calc import ScalarMeanTracker
+from utils.env_wrapper import SingleEnv
 
 
 def savn_train(
@@ -12,6 +13,7 @@ def savn_train(
     end_flag,#多线程停止位
     shared_model,
     creator,
+    loss_func,
     chosen_scene_names = None,
     chosen_objects = None,
     gradient_limit = 4
@@ -48,20 +50,20 @@ def savn_train(
         chosen_scenes = chosen_scene_names,
         chosen_targets = chosen_objects
     )
-    #initialize a episode
-    epi = creator['episode'](
-        agent,
-        env,
-        verbose = args.verbose
+    env = SingleEnv(env, False)
+    #initialize a runner
+    runner = creator['runner'](
+        args.nsteps, 1, env, agent
     )
     optim = creator['optimizer'](
         shared_model.parameters(),
         **args.optim_args
     )
-
+    n_frames = 0
+    update_frames = args.nsteps
+    loss_tracker = ScalarMeanTracker()
     while not end_flag.value:
         
-        epi.new_episode()
 
         # theta <- shared_initialization
         params_list = [get_params(shared_model, gpu_id)]
@@ -73,9 +75,10 @@ def savn_train(
         # Accumulate loss over all meta_train episodes.
         while True:
             # Run episode for k steps or until it is done or has made a mistake (if dynamic adapt is true).
+            agent.sync_with_shared(shared_model)
             if args.verbose:
                 print("New inner step")
-            _, _, _, _ = epi.get_nstep_exps(args.nsteps)
+            pi_batch, v_batch, v_final, exps = runner.run()
 
             if epi.done:
                 break
@@ -115,7 +118,7 @@ def savn_train(
                     loss_dict["{}/{:d}".format(k, episode_num)] = v.item()
 
         #loss = compute_loss(args, player, gpu_id, model_options)
-        policy_loss, value_loss = savn_loss(args, agent, gpu_id, params)
+        policy_loss, value_loss = loss_func(args, agent, gpu_id, params)
         total_loss = policy_loss + 0.5 * value_loss
         loss = dict(
             total_loss=total_loss, 

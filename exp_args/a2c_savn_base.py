@@ -12,7 +12,7 @@ args.update(
         #'BackOff':['m180']
     },
     obs_dict = {
-        'fc':'resnet50_fc_new.hdf5',
+        'res18fm':'resnet18_featuremap.hdf5',
         #'score':'resnet50_score.hdf5'
         },
     target_dict = {
@@ -23,22 +23,22 @@ args.update(
     total_train_frames = 40000,
     total_eval_epi = 1000,
     threads = 4,
-    exp_name = 'LstmModel',
+    exp_name = 'a2csavnBaseModel',
     optimizer = 'RMSprop',
-    model = 'LstmModel',
-    agent = 'SavnAgent',
-    runner = 'A3CRunner',
+    model = 'BaseModel',
+    agent = 'A2CLstmAgent',
+    runner = 'A2CRunner',
     loss_func = 'a2c_loss',
-    trainer = 'a3c_train',
+    trainer = 'a2c_train',
     optim_args = dict(lr = 0.0001, alpha = 0.99, eps = 0.1),
     print_freq = 1000,
     max_epi_length = 100,
     model_save_freq = 40000,
-    nsteps = 40,
+    nsteps = 10,
     verbose = False,
     gpu_ids = -1,
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
-    results_json = "result_lstm.json"
+    results_json = "result_a2csavnbase.json"
 )
 model_args_dict = {'action_sz' : len(args.action_dict)}
 args.update(

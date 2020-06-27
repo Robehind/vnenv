@@ -27,6 +27,7 @@ class A2CRunner:
             'action_idxs':[]
         }
         obses = {k:[] for k in self.envs.keys}
+        self.agent.clear_mems()
         for _ in range(self.nsteps):
             action, a_idx = self.agent.action(self.last_obs)
             obs_new, r, done, info = self.envs.step(action)
@@ -46,12 +47,13 @@ class A2CRunner:
                     self.total_steps += self.thread_steps[i]
                     self.thread_steps[i] = 0
                     self.thread_reward[i] = 0
-        _, v_final = self.agent.get_pi_v(self.last_obs)
-        v_final = v_final.detach().cpu().numpy().reshape(-1)
+                    self.agent.reset_hidden(i)
+        out = self.agent.model_forward(self.last_obs)
+        v_final = out['value'].detach().cpu().numpy().reshape(-1)
         for k in obses:
             obses[k] = np.array(obses[k]).reshape(-1, *obses[k][0][0].shape)
-        pi_batch, v_batch = self.agent.get_pi_v(obses)
-
+        out = self.agent.model_forward(obses, True)
+        pi_batch, v_batch = out['policy'], out['value']
         return pi_batch, v_batch, v_final, exps
     
     def eval_run(self):

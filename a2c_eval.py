@@ -16,8 +16,8 @@ from utils.model_search import search_newest_model
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a3c_demo_args import args
-    args.agent = 'A2CAgent'
+    from exp_args.a3c_savn_base import args
+    args.agent = 'A2CLstmAgent'
     #确认gpu可用情况
     if args.gpu_ids == -1:
         args.gpu_ids = [-1]
@@ -59,6 +59,7 @@ def main():
     agent = creator['agent'](
         list(args.action_dict.keys()),
         model,
+        args.threads,
         gpu_id
     )
     if args.verbose:
@@ -95,6 +96,7 @@ def main():
     pbar = tqdm(total=args.total_eval_epi)
     obs = envs.reset()
     while 1:
+        agent.clear_mems()
         action, _ = agent.action(obs)
         obs_new, r, done, info = envs.step(action)
         obs = obs_new
@@ -111,6 +113,7 @@ def main():
                         assert info[i]['best_len'] <= eplen[i]
                         spl_sum[info[i]['scene_name']] += info[i]['best_len']/eplen[i]
                     eplen[i] = 0
+                    agent.reset_hidden(i)
                 total_reward[info[i]['scene_name']] += r[i]
                 success_num[info[i]['scene_name']] += info[i]['success']
                 stop = False
