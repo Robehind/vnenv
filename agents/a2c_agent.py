@@ -22,7 +22,7 @@ class A2CAgent:
             with torch.cuda.device(self.gpu_id):
                 self.model = self.model.cuda()
 
-    def model_forward(self, obs):
+    def model_forward(self, obs, batch_opt = False):
         """obs is dict. values of obs must in numpy, and first dim is batch dim"""
         #就算只有一个环境，返回的状态也会是1x2048,不需要unsqueeze
         model_input = obs.copy()#防止obs被改变，因为obs在外部还被保存了一次

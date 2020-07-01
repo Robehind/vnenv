@@ -28,16 +28,11 @@ def savn_train(
     #initialize env and agent
 
     model = creator['model'](**args.model_args)
-    if args.verbose:
-        print('model created')
     agent = creator['agent'](
         list(args.action_dict.keys()),
-        list(args.obs_dict.keys()),
         model,
         gpu_id
     )
-    if args.verbose:
-        print('agent created')
     env = creator['env'](
         offline_data_dir = args.offline_data_dir,
         action_dict = args.action_dict,
@@ -59,8 +54,8 @@ def savn_train(
         shared_model.parameters(),
         **args.optim_args
     )
-    n_frames = 0
-    update_frames = args.nsteps
+    #n_frames = 0
+    #update_frames = args.nsteps
     loss_tracker = ScalarMeanTracker()
     while not end_flag.value:
         
@@ -68,19 +63,28 @@ def savn_train(
         # theta <- shared_initialization
         params_list = [get_params(shared_model, gpu_id)]
         params = params_list[-1]
-        loss_dict = {}
+        #loss_dict = {}
         episode_num = 0
         num_gradients = 0
-
+        exps = {
+            'rewards':[],
+            #'masks':[],
+            'action_idxs':[]
+        }
+        agent.reset_hidden()
+        agent.clear_mems()
+        
         # Accumulate loss over all meta_train episodes.
         while True:
             # Run episode for k steps or until it is done or has made a mistake (if dynamic adapt is true).
             agent.sync_with_shared(shared_model)
             if args.verbose:
                 print("New inner step")
-            pi_batch, v_batch, v_final, exps = runner.run()
+            exps_ = runner.run(params)
+            for k in exps:
+                exps[k] += exps_[k]
 
-            if epi.done:
+            if runner.done:
                 break
 
             if gradient_limit < 0 or episode_num < gradient_limit:
@@ -88,18 +92,16 @@ def savn_train(
                 num_gradients += 1
 
                 # Compute the loss.
-                loss_hx = torch.cat((agent.hidden[0], agent.last_action_probs), dim=1)
-                learned_loss = {
-                    "learned_loss": agent.model.learned_loss(
-                        loss_hx, agent.learned_input, params
+                #loss_hx = torch.cat((agent.hidden[0], agent.last_action_probs), dim=1)
+                learned_loss = agent.model.learned_loss(
+                        agent.learned_input, params
                     )
-                }
                 agent.learned_input = None
 
                 if args.verbose:
                     print("inner gradient")
                 inner_gradient = torch.autograd.grad(
-                    learned_loss["learned_loss"],
+                    learned_loss,
                     [v for _, v in params_list[episode_num].items()],
                     create_graph=True,
                     retain_graph=True,
@@ -114,20 +116,20 @@ def savn_train(
                 # reset_player(player)
                 episode_num += 1
 
-                for k, v in learned_loss.items():
-                    loss_dict["{}/{:d}".format(k, episode_num)] = v.item()
+                #for k, v in learned_loss.items():
+                    #loss_dict["{}/{:d}".format(k, episode_num)] = v.item()
 
         #loss = compute_loss(args, player, gpu_id, model_options)
-        policy_loss, value_loss = loss_func(args, agent, gpu_id, params)
-        total_loss = policy_loss + 0.5 * value_loss
-        loss = dict(
-            total_loss=total_loss, 
-            policy_loss=policy_loss, 
-            value_loss=value_loss
-            )
-
-        for k, v in loss.items():
-            loss_dict[k] = v.item()
+        pi_batch = torch.cat(agent.pi_batch, dim = 0)
+        v_batch = torch.cat(agent.v_batch, dim = 0)
+        if runner.done:
+            v_final = 0.0
+        else:
+            model_out = agent.model_forward(runner.last_obs, params = params)
+            v_final = model_out['value'].detach().cpu().item()
+        loss = loss_func(v_batch, pi_batch, v_final, exps, gpu_id=gpu_id)
+        for k in loss:
+            loss_tracker.add_scalars({k:loss[k].item()})
 
         if args.verbose:
             print("meta gradient")
@@ -138,20 +140,15 @@ def savn_train(
             [v for _, v in params_list[0].items()],
             allow_unused=True,
         )
-        
-        results = {
-            "done_count": agent.done,
-            "ep_length": epi.length,
-            "success": epi.success,
-            "total_reward":epi.total_reward
-        }
 
-        result_queue.put(results)
-
-        # Copy the meta_gradient to shared_model and step.
         transfer_gradient_to_shared(meta_gradient, shared_model, gpu_id)
         optim.step()
-        epi.end_episode()
+        #model.zero_grad()
+        
+        results = runner.pop_mems()
+
+        results.update(loss_tracker.pop_and_reset())
+        result_queue.put(results)
         
 
 

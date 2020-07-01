@@ -23,24 +23,25 @@ args.update(
     total_train_frames = 40000,
     total_eval_epi = 1000,
     threads = 4,
-    exp_name = 'savnBaseModel',
+    exp_name = 'savn',
     optimizer = 'RMSprop',
-    model = 'BaseModel',
+    model = 'SAVN',
     agent = 'SavnAgent',
-    runner = 'A3CNoMaskRunner',
+    runner = 'SavnRunner',
     loss_func = 'a3c_loss',
-    trainer = 'a3c_train',
+    trainer = 'savn_train',
     optim_args = dict(lr = 0.0001, alpha = 0.99, eps = 0.1),
+    inner_lr = 0.0001,
     print_freq = 1000,
     max_epi_length = 100,
     model_save_freq = 40000,
-    nsteps = 40,
+    nsteps = 10,
     verbose = False,
     gpu_ids = -1,
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
     results_json = "result_savnbase.json"
 )
-model_args_dict = {'action_sz' : len(args.action_dict)}
+model_args_dict = {'action_sz' : len(args.action_dict),'nsteps':args.nsteps}
 args.update(
     model_args = model_args_dict,
 )

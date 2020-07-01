@@ -16,7 +16,7 @@ import os
 
 def main():
     #读取参数
-    from exp_args.a3c_savn_base import args
+    from exp_args.savn_args import args
     #生成日志文件
     #生成实验文件夹
     start_time = time.time()
@@ -102,10 +102,12 @@ def main():
     save_freq = args.model_save_freq
     train_scalars = ScalarMeanTracker()
 
+    print_gate_frames = print_freq
+    save_gate_frames = save_freq
+
     n_epis = 0
     n_frames = 0
 
-    update_frames = args.nsteps
 
     pbar = tqdm(total=args.total_train_frames)
 
@@ -114,17 +116,20 @@ def main():
 
             train_result = result_queue.get()
             n_epis += train_result.pop('epis')
+            update_frames = train_result.pop('n_frames')
             train_scalars.add_scalars(train_result)
             
             pbar.update(update_frames)
             n_frames += update_frames
-            if n_frames % print_freq == 0:
+            if n_frames >= print_gate_frames:
+                print_gate_frames += print_freq
                 log_writer.add_scalar("n_epis", n_epis, n_frames)
                 tracked_means = train_scalars.pop_and_reset()
                 for k, v in tracked_means.items():
                     log_writer.add_scalar(k, v, n_frames)
 
-            if n_frames % save_freq == 0:
+            if n_frames >= save_gate_frames:
+                save_gate_frames += save_freq
                 if not os.path.exists(args.exp_dir):
                     os.makedirs(args.exp_dir)
                 state_to_save = shared_model.state_dict()

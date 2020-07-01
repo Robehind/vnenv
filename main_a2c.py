@@ -14,7 +14,7 @@ from utils.env_wrapper import make_envs, VecEnv
 import numpy as np
 def main():
     #读取参数
-    from exp_args.a2c_savn_base import args
+    from exp_args.a2c_demo_args import args
     #生成实验文件夹
     start_time = time.time()
     time_str = time.strftime(

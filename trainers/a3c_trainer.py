@@ -61,10 +61,10 @@ def a3c_train(
         **args.optim_args
     )
 
-    n_frames = 0
+    #n_frames = 0
     #total_epis = 0
     #print_freq = args.print_freq / args.threads
-    update_frames = args.nsteps
+    #update_frames = args.nsteps
     loss_tracker = ScalarMeanTracker()
     while not end_flag.value:
         
@@ -93,7 +93,7 @@ def a3c_train(
         if args.verbose:
             print('optimized')
         
-        n_frames += update_frames
+        #n_frames += update_frames
         #if n_frames % print_freq == 0:
         results = runner.pop_mems()
         #total_epis += record['epis']

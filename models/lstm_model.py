@@ -42,8 +42,8 @@ class LstmModel(torch.nn.Module):
         x = F.relu(hx)
         
         return dict(
-            policy=self.actor_linear(x),
-            value=self.critic_linear(x),
+            policy = self.actor_linear(x),
+            value = self.critic_linear(x),
             hidden = (hx, cx)
             )
 

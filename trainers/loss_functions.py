@@ -3,7 +3,6 @@ from utils.net_utils import gpuify
 import torch.nn.functional as F
 import numpy as np
 def a3c_loss(
-    done,
     v_batch,
     pi_batch,
     last_v,
@@ -13,8 +12,8 @@ def a3c_loss(
     #tau = 1.00,#parameter for GAE
     #beta = 1e-2,#entropy regularization term
     ):
-    
-    R = 0.0 if done else last_v
+    """接受batch经验的不带mask的简单loss计算，没有熵，没有gae"""
+    R = last_v
     policy_loss = 0
     value_loss = 0
     td_target_lst = []
@@ -23,10 +22,10 @@ def a3c_loss(
         td_target_lst.append([R])
     td_target_lst.reverse()
 
-    a_batch = torch.tensor(exps['action_idxs'])
+    a_batch = torch.tensor(exps['action_idxs']).reshape(-1, 1)
     a_batch = gpuify(a_batch, gpu_id)
     
-    td_target = torch.FloatTensor(td_target_lst)
+    td_target = torch.FloatTensor(td_target_lst).reshape(-1, 1)
     td_target = gpuify(td_target, gpu_id)
     
     advantage = td_target - v_batch.detach()
@@ -34,8 +33,8 @@ def a3c_loss(
     
 
     pi_a = F.softmax(pi_batch, dim = 1).gather(1, a_batch)
-    policy_loss = -torch.log(pi_a) * advantage.detach()
-    value_loss = 0.5*F.smooth_l1_loss(v_batch, td_target.detach())
+    policy_loss = (-torch.log(pi_a) * advantage.detach()).mean()
+    value_loss = 0.5*F.smooth_l1_loss(v_batch, td_target.detach()).mean()
     total_loss = policy_loss + value_loss
 
     return dict(
@@ -54,7 +53,7 @@ def a2c_loss(
     #tau = 1.00,#parameter for GAE
     #beta = 1e-2,#entropy regularization term
     ):
-    
+    """接受batch经验的带mask的简单loss计算，没有熵，没有gae"""
     policy_loss = 0
     value_loss = 0
 
@@ -84,39 +83,3 @@ def a2c_loss(
         policy_loss=policy_loss, 
         value_loss=value_loss
         )
-
-def savn_loss(R, exp, agent, gpu_id, params):
-    """ Borrowed from https://github.com/dgriff777/rl_a3c_pytorch. """
-    
-    if gpu_id >= 0:
-        with torch.cuda.device(gpu_id):
-            R = R.cuda()
-
-    exp['values'].append(Variable(R))
-    policy_loss = 0
-    value_loss = 0
-    gae = torch.zeros(1, 1)
-    if gpu_id >= 0:
-        with torch.cuda.device(gpu_id):
-            gae = gae.cuda()
-    R = Variable(R)
-    for i in reversed(range(len(agent.rewards))):
-        R = args.gamma * R + agent.rewards[i]
-        advantage = R - agent.values[i]
-        value_loss = value_loss + 0.5 * advantage.pow(2)
-
-        delta_t = (
-            agent.rewards[i]
-            + args.gamma * agent.values[i + 1].data
-            - agent.values[i].data
-        )
-
-        gae = gae * args.gamma * args.tau + delta_t
-
-        policy_loss = (
-            policy_loss
-            - agent.log_probs[i] * Variable(gae)
-            - args.beta * agent.entropies[i]
-        )
-
-    return policy_loss, value_loss

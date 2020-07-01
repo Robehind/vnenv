@@ -4,8 +4,9 @@ import numpy as np
 import copy
 
 from utils.net_utils import toFloatTensor, gpuify
+from .a3c_lstm_agent import A3CLstmAgent
 #让agent可以知道动作的字符串，也许在未来有作用
-class SavnAgent:
+class SavnAgent(A3CLstmAgent):
     """SAVN agent, a3c style"""
     def __init__(
         self,
@@ -14,89 +15,68 @@ class SavnAgent:
         gpu_id = -1,
         hidden_state_sz = 512
     ):
-        self.actions = action_str
-        self.gpu_id = gpu_id
-        self.model = model
-        #self.learned_input = None
-        self.hidden_state_sz = hidden_state_sz
-        self.done = False#智能体是否提出done？当动作中不含'Done'时，一定一直为False
-        if self.gpu_id >= 0:
-            with torch.cuda.device(self.gpu_id):
-                self.model = self.model.cuda()
-        
-        ###################################################
-        self.hidden_batch = [
-            torch.zeros(1, self.hidden_state_sz),
-            torch.zeros(1, self.hidden_state_sz)
-            ]
-        self.probs_batch = torch.zeros((1, len(self.actions)))
+        super(SavnAgent, self).__init__(
+            action_str,
+            model,
+            gpu_id = -1,
+            hidden_state_sz = 512
+            )
+        self.learned_input = None#注意这个东西在外部重置的，不重置就会一直增加啊
+        self.pi_batch = []
+        self.v_batch = []
 
-    def model_forward(self, obs, batch_opt = False):
+    def model_forward(self, obs, batch_opt = False, params = None):
 
         model_input = obs.copy()
         
         for k in model_input:
             model_input[k] = toFloatTensor(model_input[k], self.gpu_id)
-            model_input[k].squeeze_()
             if not batch_opt:
                 model_input[k].unsqueeze_(0)
         if batch_opt:
             model_input['hidden'] = (
-                gpuify(self.hidden_batch[0][:-1], self.gpu_id),
-                gpuify(self.hidden_batch[1][:-1], self.gpu_id)
+                self.hidden_batch[0][:-1],
+                self.hidden_batch[1][:-1],
                 )
-            model_input['action_probs'] = gpuify(self.probs_batch[:-1], self.gpu_id)
+            model_input['action_probs'] = self.probs_batch[:-1]
         else:
             model_input['hidden'] = (
-                gpuify(self.hidden_batch[0][-1:], self.gpu_id),
-                gpuify(self.hidden_batch[1][-1:], self.gpu_id)
+                self.hidden_batch[0][-1:],
+                self.hidden_batch[1][-1:],
                 )
-            model_input['action_probs'] = gpuify(self.probs_batch[-1:], self.gpu_id)
-        out = self.model.forward(model_input)
+            model_input['action_probs'] = self.probs_batch[-1:]
+        out = self.model.forward(model_input, params)
         
         return out
 
-    def action(self, env_state):
+    def action(self, env_state, params):
         
-        out = self.model_forward(env_state)
-        pi, hidden = out['policy'], out['hidden']
-        #del out['value']
-        self.hidden_batch[0] = torch.cat((self.hidden_batch[0], hidden[0].cpu().detach()), 0)
-        self.hidden_batch[1] = torch.cat((self.hidden_batch[1], hidden[1].cpu().detach()), 0)
+        out = self.model_forward(env_state, params = params)
+        pi, v, hidden = out['policy'], out['value'], out['hidden']
+        self.pi_batch.append(pi)
+        self.v_batch.append(v)
+        self.hidden_batch[0] = torch.cat((self.hidden_batch[0], hidden[0]), 0)
+        self.hidden_batch[1] = torch.cat((self.hidden_batch[1], hidden[1]), 0)
         #softmax,形成在动作空间上的分布
         prob = F.softmax(pi, dim = 1).cpu()
-        self.probs_batch = torch.cat((self.probs_batch, prob.detach()), 0)
+        self.probs_batch = torch.cat((self.probs_batch, prob), 0)
         #采样
         action_idx = prob.multinomial(1).item()
 
-        # res = torch.cat((self.hidden_batch[0][-1:], prob), dim=1)
-        # if self.learned_input is None:
-        #     self.learned_input = res
-        # else:
-        #     self.learned_input = torch.cat((self.learned_input, res), dim=0)
+        res = torch.cat((self.hidden_batch[0][-1:], prob), dim=1)
+        if self.learned_input is None:
+            self.learned_input = res
+        else:
+            self.learned_input = torch.cat((self.learned_input, res), dim=0)
 
         return self.actions[action_idx], action_idx
-
-
-    def sync_with_shared(self, shared_model):
-        """ Sync with the shared model. """
-        if self.gpu_id >= 0:
-            with torch.cuda.device(self.gpu_id):
-                self.model.load_state_dict(shared_model.state_dict())
-        else:
-            self.model.load_state_dict(shared_model.state_dict())
-        pass
-
-    def reset_hidden(self):
-        self.hidden_batch[0][-1] = torch.zeros(1, self.hidden_state_sz)
-        self.hidden_batch[1][-1] = torch.zeros(1, self.hidden_state_sz)
-        self.probs_batch[-1] = torch.zeros((1, len(self.actions)))
-        #self.learned_input = None
     
     def clear_mems(self):
         self.hidden_batch = [
-                self.hidden_batch[0][-1:],
-                self.hidden_batch[1][-1:],
+                self.hidden_batch[0][-1:].detach(),
+                self.hidden_batch[1][-1:].detach(),
             ]
-        self.probs_batch = self.probs_batch[-1:]
-
+        self.probs_batch = self.probs_batch[-1:].detach()
+        self.pi_batch = []
+        self.v_batch = []
+        self.learned_input = None
