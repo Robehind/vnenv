@@ -49,7 +49,7 @@ class SavnAgent(A3CLstmAgent):
         
         return out
 
-    def action(self, env_state, params):
+    def action(self, env_state, params = None):
         
         out = self.model_forward(env_state, params = params)
         pi, v, hidden = out['policy'], out['value'], out['hidden']
