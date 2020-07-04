@@ -18,8 +18,8 @@ class SavnAgent(A3CLstmAgent):
         super(SavnAgent, self).__init__(
             action_str,
             model,
-            gpu_id = -1,
-            hidden_state_sz = 512
+            gpu_id,
+            hidden_state_sz
             )
         self.learned_input = None#注意这个东西在外部重置的，不重置就会一直增加啊
         self.pi_batch = []
@@ -58,10 +58,10 @@ class SavnAgent(A3CLstmAgent):
         self.hidden_batch[0] = torch.cat((self.hidden_batch[0], hidden[0]), 0)
         self.hidden_batch[1] = torch.cat((self.hidden_batch[1], hidden[1]), 0)
         #softmax,形成在动作空间上的分布
-        prob = F.softmax(pi, dim = 1).cpu()
+        prob = F.softmax(pi, dim = 1).detach()
         self.probs_batch = torch.cat((self.probs_batch, prob), 0)
         #采样
-        action_idx = prob.multinomial(1).item()
+        action_idx = prob.multinomial(1).cpu().item()
 
         res = torch.cat((self.hidden_batch[0][-1:], prob), dim=1)
         if self.learned_input is None:

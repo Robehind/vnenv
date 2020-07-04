@@ -62,10 +62,10 @@ class A3CLstmAgent:
         self.hidden_batch[0] = torch.cat((self.hidden_batch[0], hidden[0]), 0)
         self.hidden_batch[1] = torch.cat((self.hidden_batch[1], hidden[1]), 0)
         #softmax,形成在动作空间上的分布
-        prob = F.softmax(pi, dim = 1).cpu()
+        prob = F.softmax(pi, dim = 1).detach()
         self.probs_batch = torch.cat((self.probs_batch, prob), 0)
         #采样
-        action_idx = prob.multinomial(1).item()
+        action_idx = prob.multinomial(1).cpu().item()
 
         return self.actions[action_idx], action_idx
 

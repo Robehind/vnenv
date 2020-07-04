@@ -22,7 +22,7 @@ args.update(
     rotate_angle = 90,
     total_train_frames = 40000,
     total_eval_epi = 1000,
-    threads = 4,
+    threads = 1,
     exp_name = 'savn',
     optimizer = 'RMSprop',
     model = 'SAVN',
