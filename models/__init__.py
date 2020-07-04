@@ -5,3 +5,4 @@ from .basemodel import BaseModel
 from .lstm_model import LstmModel
 from .savn import SAVN
 from .gcn_base import GcnBaseModel
+from .gcn_savn import GCNSAVN

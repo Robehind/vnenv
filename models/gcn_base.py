@@ -106,7 +106,23 @@ class GcnBaseModel(torch.nn.Module):
                 )
             )
             x = self.dropout(image_embedding)
-            x = torch.cat((x, glove_reshaped, action_reshaped), dim=1)
+
+            gcn_p = {}
+            for k in params:
+                gcn_n = k.split('.', 1)
+                if gcn_n[0] == 'gcn':
+                    gcn_p[gcn_n[1]] = params[k]
+            gcn_feat = self.gcn(score, gcn_p)
+            gcn_feat = F.relu(
+                F.linear(
+                    gcn_feat,
+                    weight=params["gcn_embed.weight"],
+                    bias=params["gcn_embed.bias"],
+                )
+            )
+            gcn_reshaped = gcn_feat.view(-1, self.gcn_size, 1, 1).repeat(1, 1, 7, 7)
+
+            x = torch.cat((x, gcn_reshaped, glove_reshaped, action_reshaped), dim=1)
 
             x = F.relu(
                 F.conv2d(
@@ -126,16 +142,7 @@ class GcnBaseModel(torch.nn.Module):
             critic_out = self.critic_linear(x)
 
         else:
-            # hx, cx = self._backend.LSTMCell(
-            #     embedding,
-            #     prev_hidden,
-            #     params["lstm.weight_ih"],
-            #     params["lstm.weight_hh"],
-            #     params["lstm.bias_ih"],
-            #     params["lstm.bias_hh"],
-            # )
-
-            #Change for pytorch 1.01
+            
             hx, cx = nn._VF.lstm_cell(
                 embedding,
                 prev_hidden,
@@ -194,6 +201,9 @@ if __name__ == "__main__":
         'hidden':(torch.randn(4,512), torch.randn(4,512)),
         'glove':torch.randn(4,300)
     }
-    out = model.forward(input_)
+    
+    aa =  dict(model.named_parameters())
+    cc = aa.copy()
+    out = model.forward(input_, cc)
     print(out['policy'])
     print(out['value'])

@@ -16,7 +16,7 @@ import os
 
 def main():
     #读取参数
-    from exp_args.a3c_savn_base import args
+    from exp_args.a3c_gcn_savn import args
     #生成日志文件
     #生成实验文件夹
     start_time = time.time()

@@ -100,30 +100,67 @@ class GCN(nn.Module):
 
         self.mapping = nn.Linear(self.n, 512)
 
-    def gcn_embed(self, x):
+    def gcn_embed(self, x, params):
+        if params == None:
+            resnet_embed = self.resnet_to_gcn(x)
+            word_embedding = self.word_to_gcn(self.all_glove)
 
-        resnet_embed = self.resnet_to_gcn(x)
-        word_embedding = self.word_to_gcn(self.all_glove)
+            n_steps = resnet_embed.shape[0]
+            resnet_embed = resnet_embed.repeat(self.n,1,1)
 
-        n_steps = resnet_embed.shape[0]
-        resnet_embed = resnet_embed.repeat(self.n,1,1)
+            output = torch.cat(
+                (resnet_embed.permute(1,0,2), word_embedding.repeat(n_steps,1,1)), 
+                dim=2
+                )
+        else:
+            resnet_embed = F.linear(
+                x,
+                weight=params["resnet_to_gcn.weight"],
+                bias=params["resnet_to_gcn.bias"],
+            )
+            word_embedding = F.linear(
+                self.all_glove,
+                weight=params["word_to_gcn.weight"],
+                bias=params["word_to_gcn.bias"],
+            )
 
-        output = torch.cat(
-            (resnet_embed.permute(1,0,2), word_embedding.repeat(n_steps,1,1)), dim=2)
+            n_steps = resnet_embed.shape[0]
+            resnet_embed = resnet_embed.repeat(self.n,1,1)
+
+            output = torch.cat(
+                (resnet_embed.permute(1,0,2), word_embedding.repeat(n_steps,1,1)), 
+                dim=2
+                )
         return output
 
-    def forward(self, x):
+    def forward(self, x, params):
 
         # x = (current_obs)
         # Convert input to gcn input
-        x = self.gcn_embed(x)
+        x = self.gcn_embed(x, params)
+        if params == None:
+            x = F.relu(self.gc1(x, self.A))
+            x = F.relu(self.gc2(x, self.A))
+            x = F.relu(self.gc3(x, self.A))
+            x.squeeze_(-1)
+            x = self.mapping(x)
+        else:
+            gc_p = [
+                dict(
+                    weight = params[f'gc{x}.weight'], bias = params[f'gc{x}.bias']
+                    )
+                for x in [1,2,3]
+                ]
+            x = F.relu(self.gc1(x, self.A, gc_p[0]))
+            x = F.relu(self.gc2(x, self.A, gc_p[1]))
+            x = F.relu(self.gc3(x, self.A, gc_p[2]))
+            x.squeeze_(-1)
+            x = F.linear(
+                    x,
+                    weight=params["mapping.weight"],
+                    bias=params["mapping.bias"],
+                )
 
-        x = F.relu(self.gc1(x, self.A))
-        x = F.relu(self.gc2(x, self.A))
-        x = F.relu(self.gc3(x, self.A))
-
-        x.squeeze_(-1)
-        x = self.mapping(x)
         return x
 
 # Code borrowed from https://github.com/tkipf/pygcn
@@ -148,13 +185,21 @@ class GraphConvolution(nn.Module):
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
 
-    def forward(self, input, adj):
-        support = torch.matmul(input, self.weight)
-        output = torch.matmul(adj, support)
-        if self.bias is not None:
-            return output + self.bias
+    def forward(self, input, adj, params = None):
+        if params == None:
+            support = torch.matmul(input, self.weight)
+            output = torch.matmul(adj, support)
+            if self.bias is not None:
+                return output + self.bias
+            else:
+                return output
         else:
-            return output
+            support = torch.matmul(input, params['weight'])
+            output = torch.matmul(adj, support)
+            if self.bias is not None:
+                return output + params['bias']
+            else:
+                return output
 
     def __repr__(self):
         return self.__class__.__name__ + ' (' \
