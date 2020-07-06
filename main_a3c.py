@@ -16,14 +16,14 @@ import os
 
 def main():
     #读取参数
-    from exp_args.a3c_savn_base import args
+    from exp_args.a3c_demo_args import args
     #生成日志文件
     #生成实验文件夹
     start_time = time.time()
     time_str = time.strftime(
         "%y%m%d_%H%M%S", time.localtime(start_time)
     )
-    args.exp_dir = os.path.join(args.exps_dir, args.exp_name + '-' + time_str)
+    args.exp_dir = os.path.join(args.exps_dir, args.exp_name + '_' + time_str)
     if not os.path.exists(args.exp_dir):
         os.makedirs(args.exp_dir)
     #保存本次实验的参数

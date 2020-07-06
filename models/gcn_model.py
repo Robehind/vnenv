@@ -133,7 +133,7 @@ class GCN(nn.Module):
                 )
         return output
 
-    def forward(self, x, params):
+    def forward(self, x, params = None):
 
         # x = (current_obs)
         # Convert input to gcn input
