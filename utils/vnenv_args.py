@@ -18,6 +18,26 @@ class VNENVargs:
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(self.__dict__, f, indent=4)
 
+    def args_pack(self):
+        aa = dict(
+            env_args = dict(
+                offline_data_dir = self.offline_data_dir,
+                action_dict = self.action_dict,
+                target_dict = self.target_dict,
+                obs_dict = self.obs_dict,
+                reward_dict = self.reward_dict,
+                max_steps = self.max_epi_length,
+                grid_size = self.grid_size,
+                rotate_angle = self.rotate_angle,
+            ),
+            agent_args = dict(),
+            runner_args = dict(),
+            model_args = dict(),
+            optim_args = dict()
+
+        )
+        self.update(aa)
+
 if __name__ == "__main__":
     args = VNENVargs(a = 1, s= 2, vsvv = 3)
     args.save_args('./test.json')

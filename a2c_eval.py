@@ -11,13 +11,12 @@ import os
 from utils.env_wrapper import make_envs, VecEnv
 from trainers.loss_functions import a2c_loss
 import numpy as np
-from utils.mean_calc import ScalarMeanTracker
 from utils.model_search import search_newest_model
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a3c_savn_base import args
-    args.agent = 'A2CLstmAgent'
+    from exp_args.a3c_demo_args import args
+    args.agent = 'A2CAgent'
     #确认gpu可用情况
     if args.gpu_ids == -1:
         args.gpu_ids = [-1]

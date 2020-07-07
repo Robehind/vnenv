@@ -51,7 +51,6 @@ class A2CAgent:
                 self.model.load_state_dict(shared_model.state_dict())
         else:
             self.model.load_state_dict(shared_model.state_dict())
-        pass
 
     def save_model(self, path_to_save, title):
         if not os.path.exists(path_to_save):

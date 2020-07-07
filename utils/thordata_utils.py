@@ -1,9 +1,10 @@
 import random
 def get_scene_names(train_scenes):
-    tmp = []
+    tmp = {}
+    #mapping = {"kitchen":0, "living_room":1, "bedroom":2, "bathroom":3}
     for k in train_scenes.keys():
         ss = [int(x) for x in train_scenes[k].split('-')]
-        tmp.append([make_scene_name(k, i) for i in range(ss[0], ss[-1]+1)])
+        tmp[k] = [make_scene_name(k, i) for i in range(ss[0], ss[-1]+1)]
     return tmp
 
 def make_scene_name(scene_type, num):
@@ -16,7 +17,7 @@ def make_scene_name(scene_type, num):
 
 def random_divide(total_epi, chosen_scenes, n):
     """输入的chosen scenes是从get_scene_names得到的还打包过一次的场景名"""
-    scenes = [x for i in chosen_scenes for x in i]
+    scenes = [x for i in chosen_scenes.values() for x in i]
     out = []
     random.shuffle(scenes)
     if n > len(scenes):
@@ -44,6 +45,6 @@ if __name__ == "__main__":
         'kitchen':'1-20',
         'living_room':'5',
     }
-    print(get_scene_names(train_scenes))
-    cc = [[1],[2,3,4,5],[6,7,8,9,10,11,12]]
+    cc = get_scene_names(train_scenes)
+    #cc = [[1],[2,3,4,5],[6,7,8,9,10,11,12]]
     print(random_divide(100,cc, 7))
