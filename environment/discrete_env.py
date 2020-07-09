@@ -7,6 +7,7 @@ import os
 import json
 import importlib
 from .agent_pose_state import get_state_from_str
+from utils.thordata_utils import get_type
 #改成私有变量
 class DiscreteEnvironment:
     """读取数据集，模拟交互，按照dict的组织和标识来返回数据和信息。
@@ -201,7 +202,7 @@ class DiscreteEnvironment:
             else:
                 #TODO 这样可能会慢，后面来优化
                 self.intersect_targets = list(
-                    set(self.chosen_targets).intersection(set(self.all_objects))
+                    set(self.chosen_targets[get_type(scene_name)]).intersection(set(self.all_objects))
                     )
                 if self.intersect_targets == []:
                     raise Exception(f'In scene {self.scene_name}, {self.chosen_targets}, {self.all_objects}')
@@ -426,7 +427,14 @@ class DiscreteEnvironment:
         self.all_visible_states = [x for x in self.all_visible_states if x in legal_states]
 
         for k in self.all_visible_states:
-            path = nx.shortest_path(graph, str(start_state), k)
+            try:
+                path = nx.shortest_path(graph, str(start_state), k)
+            except nx.exception.NetworkXNoPath:
+                print(self.scene_name)
+                path = nx.shortest_path(graph, str(start_state), k)
+            except nx.NodeNotFound:
+                print(self.scene_name)
+                path = nx.shortest_path(graph, str(start_state), k)
             path_len = len(path) - 1
             if path_len < best_path_len:
                 best_path = path

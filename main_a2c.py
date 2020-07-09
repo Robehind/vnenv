@@ -14,13 +14,13 @@ from utils.env_wrapper import make_envs, VecEnv
 import numpy as np
 def main():
     #读取参数
-    from exp_args.a2c_demo_args import args
+    from exp_args.a2c_lite_args import args
     #生成实验文件夹
     start_time = time.time()
     time_str = time.strftime(
         "%y%m%d_%H%M%S", time.localtime(start_time)
     )
-    args.exp_dir = os.path.join(args.exps_dir, args.exp_name + '-' + time_str)
+    args.exp_dir = os.path.join(args.exps_dir, args.exp_name + '_' + time_str)
     if not os.path.exists(args.exp_dir):
         os.makedirs(args.exp_dir)
     #保存本次实验的参数
@@ -58,9 +58,7 @@ def main():
     #这里用于分配各个线程的环境可以加载的场景以及目标
     chosen_scene_names = get_scene_names(args.train_scenes)
     scene_names_div, _ = random_divide(1000, chosen_scene_names, args.threads)
-    chosen_objects = []
-    for k in args.train_targets.keys():
-        chosen_objects = chosen_objects + args.train_targets[k]
+    chosen_objects = args.train_targets
 
     #初始化各个对象
     optimizer = creator['optimizer'](

@@ -66,6 +66,7 @@ def savn_test(
         thread_steps = 0
         while True:
             # Run episode for k steps or until it is done or has made a mistake (if dynamic adapt is true).
+            agent.learned_input = None
             if args.verbose:
                 print("New inner step")
             
@@ -87,9 +88,10 @@ def savn_test(
                         'SPL:':spl,
                         'total_reward:':thread_reward
                     }
+                    target_str = info['scene_name']+'/'+info['target']
                     res = {
                         info['scene_name']:data,
-                        info['target']:data
+                        target_str:data
                     }
                     result_queue.put(res)
                     break

@@ -16,7 +16,7 @@ import os
 
 def main():
     #读取参数
-    from exp_args.a3c_demo_args import args
+    from exp_args.a3c_lite_args import args
     #生成日志文件
     #生成实验文件夹
     start_time = time.time()
@@ -63,9 +63,7 @@ def main():
     #暂时就每个线程都加载的物体
     chosen_scene_names = get_scene_names(args.train_scenes)
     scene_names_div, _ = random_divide(1000, chosen_scene_names, args.threads)
-    chosen_objects = []
-    for k in args.train_targets.keys():
-        chosen_objects = chosen_objects + args.train_targets[k]
+    chosen_objects = args.train_targets
 
     #初始化TX
     log_writer = SummaryWriter(log_dir = args.exp_dir)
