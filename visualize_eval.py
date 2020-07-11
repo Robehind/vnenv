@@ -17,7 +17,7 @@ from utils.env_wrapper import SingleEnv
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a3c_args import args
+    from exp_args.a2c_demo_args import args
     #args.exp_name = '123'
     args.obs_dict.update(dict(image='images.hdf5'))
     #print(args.obs_dict)
@@ -50,9 +50,7 @@ def main():
     #这里用于分配各个线程的环境可以加载的场景以及目标
     chosen_scene_names = get_scene_names(args.test_scenes)
     scene_names_div, _ = random_divide(args.total_eval_epi, chosen_scene_names, args.threads)
-    chosen_objects = []
-    for k in args.test_targets.keys():
-        chosen_objects = chosen_objects + args.test_targets[k]
+    chosen_objects = args.test_targets
     #生成多线程环境，每个线程可以安排不同的房间或者目标
     agent = creator['agent'](
         list(args.action_dict.keys()),
