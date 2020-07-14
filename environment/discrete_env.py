@@ -253,7 +253,7 @@ class DiscreteEnvironment:
                 if str(agent_state) not in ban_list: break
         else:
             assert agent_state in self.all_agent_states
-            assert agent_state not in ban_list
+            #assert agent_state not in ban_list
         if isinstance(agent_state, str):
             agent_state = get_state_from_str(agent_state)
         self.agent_state = agent_state
@@ -435,7 +435,8 @@ class DiscreteEnvironment:
             except nx.NodeNotFound:
                 print(self.scene_name)
                 path = nx.shortest_path(graph, str(start_state), k)
-            path_len = len(path) - 1
+            #path_len = len(path) - 1
+            path_len = len(path)
             if path_len < best_path_len:
                 best_path = path
                 best_path_len = path_len

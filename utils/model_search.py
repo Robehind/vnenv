@@ -15,7 +15,7 @@ def search_newest_model(exps_dir, exp_name):
     fd = None
     tmp = -1
     dd.sort()
-    print(dd)
+    #print(dd)
     #stop = False
     for d in dd[::-1]:
         _, _, files = next(os.walk(os.path.join(exps_dir, d)))

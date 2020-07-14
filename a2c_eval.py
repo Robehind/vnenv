@@ -16,8 +16,8 @@ from utils.model_search import search_newest_model
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a2c_lite_args import args
-    args.agent = 'A2CAgent'#TODO
+    from exp_args.a3c_savn_base import args
+    args.agent = 'A2CLstmAgent'#TODO
 
     #生成测试文件夹
     start_time = time.time()
@@ -65,9 +65,34 @@ def main():
         model.load_state_dict(torch.load(args.load_model_dir))
 
     #这里用于分配各个线程的环境可以加载的场景以及目标
+    sche = {}
     chosen_scene_names = get_scene_names(args.test_scenes)
-    scene_names_div, nums_div = random_divide(args.total_eval_epi, chosen_scene_names, args.threads)
     chosen_objects = args.test_targets
+    test_set_div = None
+    if args.test_sche_dir == '':
+        scene_names_div, nums_div = random_divide(
+            args.total_eval_epi, chosen_scene_names, args.threads
+            )
+        #total_epi = args.total_eval_epi
+    else:
+        print('Using Test Schedule at ',args.test_sche_dir)
+        total_epi = 0
+        scene_names_div = []
+        #是按照chosen scene names指定的房间类型加载json的，所以不能只单单指定一个路径
+        for k in chosen_scene_names:
+            pa = os.path.join(args.test_sche_dir,k+'_test_set.json')
+            import json
+            with open(pa, 'r') as f:
+                sche[k] = json.load(f)
+            total_epi += len(sche[k])
+        args.total_eval_epi = total_epi
+        test_set_div , nums_div = random_divide(total_epi, sche, args.threads)
+        for i in range(args.threads):
+            scene_names_div.append(set())
+            for x in test_set_div[i]:
+                scene_names_div[i].add(x[0])
+            scene_names_div[i] = list(scene_names_div[i])
+
     #生成多线程环境，每个线程可以安排不同的房间或者目标
     agent = creator['agent'](
         list(args.action_dict.keys()),
@@ -94,7 +119,7 @@ def main():
             chosen_targets = chosen_objects
         )
         env_fns.append(make_envs(env_args, creator['env']))
-    envs = VecEnv(env_fns, eval_mode = True)
+    envs = VecEnv(env_fns, eval_mode = True, test_sche = test_set_div)
 
 
     n_epis_thread = [0 for _ in range(args.threads)]
@@ -123,7 +148,8 @@ def main():
                 stop = False
                 t_info = info[i]
                 thread_reward[i] += r[i]
-                thread_steps[i] += not t_info['agent_done']
+                #thread_steps[i] += not t_info['agent_done']
+                thread_steps[i] += 1
                 if done[i]:
                     n_epis_thread[i] += 1
                     pbar.update(1)

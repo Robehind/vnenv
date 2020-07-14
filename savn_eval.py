@@ -15,7 +15,7 @@ import os
 
 def main():
     #读取参数
-    from exp_args.a3c_gcn_savn import args
+    from exp_args.savn_args import args
 
     #生成测试文件夹
     start_time = time.time()
@@ -57,10 +57,27 @@ def main():
     tester = getattr(testers, args.tester)
    
     #这里用于分配各个线程的环境可以加载的场景以及目标
+    t_epis = {}
+    sche = {}
     chosen_scene_names = get_scene_names(args.test_scenes)
     chosen_objects = args.test_targets
-    t_epis = args.total_eval_epi // len(chosen_scene_names.keys())
-    total_epi = len(chosen_scene_names.keys())*t_epis
+    if args.test_sche_dir == '':
+        ave_epi = args.total_eval_epi // len(chosen_scene_names.keys())
+        for k in chosen_scene_names:
+            t_epis[k] = ave_epi
+            sche[k] = None
+        total_epi = len(chosen_scene_names.keys())*ave_epi
+    else:
+        total_epi = 0
+        print('Using Test Schedule at ',args.test_sche_dir)
+        #是按照chosen scene names指定的房间类型加载json的，所以不能只单单指定一个路径
+        for k in chosen_scene_names:
+            pa = os.path.join(args.test_sche_dir,k+'_test_set.json')
+            import json
+            with open(pa, 'r') as f:
+                sche[k] = json.load(f)
+            t_epis[k] = len(sche[k])
+            total_epi += t_epis[k]
 
      #生成各个线程
     processes = []
@@ -79,7 +96,8 @@ def main():
                 creator,
                 chosen_scene_names[s_type],
                 chosen_objects,
-                t_epis,
+                t_epis[s_type],
+                sche[s_type],
             ),
         )
         p.start()

@@ -69,8 +69,8 @@ class SingleEnv:
         self.t_reper = None
         self.keys, self.shapes, self.dtypes = split_data_info(env.data_info)
 
-    def reset(self):
-        obs, self.t_reper = self.env.reset(calc_best_len = self.eval_mode)
+    def reset(self, **kwargs):
+        obs, self.t_reper = self.env.reset(calc_best_len = self.eval_mode, **kwargs)
         obs.update(self.t_reper)
         return obs
 
@@ -89,7 +89,7 @@ class SingleEnv:
 
 class VecEnv:
     closed = False
-    def __init__(self, env_fns, context='spawn', eval_mode = False):
+    def __init__(self, env_fns, context='spawn', eval_mode = False, test_sche = None):
         """
         If you don't specify observation_space, we'll have to create a dummy
         environment to get it.
@@ -102,16 +102,18 @@ class VecEnv:
         env.close()
         del env
         self.num_envs = len(env_fns)
-        #self.observation_space = observation_space
-        #self.action_space = action_space
+        if test_sche == None:
+            test_sche = [[] for _ in range(len(env_fns))]
         self.data_bufs = [
             {k: ctx.Array(_NP_TO_CT[self.dtypes[k]], int(np.prod(self.shapes[k]))) for k in self.keys}
             for _ in env_fns]
         self.parent_pipes = []
         self.procs = []
+        thread = -1
         for env_fn, data_buf in zip(env_fns, self.data_bufs):
             parent_pipe, child_pipe = ctx.Pipe()
             env_fn = CloudpickleWrapper(env_fn)
+            thread += 1
             proc = ctx.Process(target=_subproc_worker,
                         args=(
                             child_pipe, 
@@ -120,7 +122,8 @@ class VecEnv:
                             data_buf, 
                             self.shapes, 
                             self.dtypes,
-                            eval_mode
+                            eval_mode,
+                            test_sche[thread]
                             ))
             proc.daemon = True
             self.procs.append(proc)
@@ -192,11 +195,18 @@ class VecEnv:
         return dict_to_obs(result)
 
 
-def _subproc_worker(pipe, parent_pipe, env_fn, bufs, obs_shapes, obs_dtypes, eval_mode):
+def _subproc_worker(pipe, parent_pipe, env_fn, bufs, obs_shapes, obs_dtypes, eval_mode, test_sche = []):
     """
     Control a single environment instance using IPC and
     shared memory.
     """
+    if test_sche is not []:
+        for i in range(len(test_sche)):
+            test_sche[i] = dict(
+                scene_name = test_sche[i][0], 
+                target_str = test_sche[i][1], 
+                agent_state = test_sche[i][2], 
+                )
     def _write_bufs(dict_data):
         for k in dict_data:
             dst = bufs[k].get_obj()
@@ -208,12 +218,18 @@ def _subproc_worker(pipe, parent_pipe, env_fn, bufs, obs_shapes, obs_dtypes, eva
         while True:
             cmd, data = pipe.recv()
             if cmd == 'reset':
-                obs, t_reper = env.reset(calc_best_len = eval_mode)
+                if test_sche == []:
+                    obs, t_reper = env.reset(calc_best_len = eval_mode)
+                else:
+                    obs, t_reper = env.reset(calc_best_len = eval_mode,**test_sche.pop())
                 pipe.send((_write_bufs(obs), _write_bufs(t_reper)))
             elif cmd == 'step':
                 obs, reward, done, info = env.step(data)
                 if done:
-                    obs, t_reper = env.reset(calc_best_len = eval_mode)
+                    if test_sche == []:
+                        obs, t_reper = env.reset(calc_best_len = eval_mode)
+                    else:
+                        obs, t_reper = env.reset(calc_best_len = eval_mode,**test_sche.pop())
                     _write_bufs(t_reper)
                 pipe.send((_write_bufs(obs), reward, done, info))
             elif cmd == 'render':

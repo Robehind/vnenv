@@ -15,6 +15,7 @@ def savn_test(
     chosen_scene_names,
     chosen_objects,
     t_epis,
+    test_sche = None,
     gradient_limit = 4
 ):
 
@@ -48,7 +49,22 @@ def savn_test(
         chosen_targets = chosen_objects
     )
     env = SingleEnv(env, True)
-
+    if test_sche == None:
+        test_sche = []
+        for _ in range(t_epis):
+            test_sche.append(dict(
+                scene_name = None, 
+                target_str = None, 
+                agent_state = None, 
+            ))
+    else:
+        for i in range(t_epis):
+            test_sche[i] = dict(
+                scene_name = test_sche[i][0], 
+                target_str = test_sche[i][1], 
+                agent_state = test_sche[i][2], 
+                )
+        test_sche.reverse()
     while t_epis:
         t_epis -= 1
         # theta <- shared_initialization
@@ -59,7 +75,7 @@ def savn_test(
         num_gradients = 0
         agent.reset_hidden()
         agent.clear_mems()
-        last_obs = env.reset()
+        last_obs = env.reset(**test_sche[t_epis])
         # Accumulate loss over all meta_train episodes.
         done = False
         thread_reward = 0
@@ -75,7 +91,8 @@ def savn_test(
                 obs_new, r, done, info = env.step(action)
             
                 thread_reward += r
-                thread_steps += not info['agent_done']
+                #thread_steps += not info['agent_done']
+                thread_steps += 1
 
                 if done:
                     spl = 0

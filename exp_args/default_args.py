@@ -18,6 +18,7 @@ args_dict = dict(
     exps_dir = '../EXPS',#保存所有实验文件夹的路径
     exp_name = 'demo_exp',#将用于生成本次实验的实验文件夹的文件名，因此尽量不要包含特殊符号
     exp_dir = '',#单次实验的完整路径，会根据时间自动生成
+    test_sche_dir = '',#测试序列的json文件夹
     nsteps = 5,#更新梯度的频率，每n步进行一次loss计算并更新梯度
     threads = 4,#线程数
     offline_data_dir = '../thordata/mixed_offline_data',#数据集的位置，该路径下应该是那些FloorPlan开头的文件夹才对
@@ -34,7 +35,6 @@ args_dict = dict(
     runner = 'A2CRunner',#用于指导环境和智能体交互产生数据的类
     optimizer = 'SGD',#需要的参数见下
     env = 'DiscreteEnvironment',
-    episode = 'BasicEpisode',
 
     #interact args
     #动作参数字典，键值为该动作的字符串，值为一个列表，元素为该数据集支持的最小动作元的list。
@@ -79,7 +79,7 @@ args_dict = dict(
     #指定测试用的场景。
     test_scenes = {
         'kitchen':'21-30',
-        'living_room':'21-30',
+        'living_room':'21-22,24-30',
         'bedroom':'21-30',
         'bathroom':'21-30',
     },
