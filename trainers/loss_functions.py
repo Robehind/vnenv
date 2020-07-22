@@ -38,8 +38,8 @@ def a3c_loss(
     total_loss = policy_loss + value_loss
 
     return dict(
-        total_loss=total_loss, 
-        policy_loss=policy_loss, 
+        total_loss=total_loss,
+        policy_loss=policy_loss,
         value_loss=value_loss
         )
 
@@ -80,6 +80,50 @@ def a2c_loss(
 
     return dict(
         total_loss=total_loss, 
+        policy_loss=policy_loss, 
+        value_loss=value_loss
+        )
+
+def savn_loss(
+    v_batch,
+    log_pi_batch,
+    entropies,
+    last_v,
+    exps,
+    gpu_id = -1,
+    gamma = 0.99,#discount factor for exps['rewards']
+    tau = 1.00,#parameter for GAE
+    beta = 1e-2,#entropy regularization term
+    ):
+    R = last_v
+    v_batch.append(gpuify(torch.tensor(R), gpu_id))
+    policy_loss = 0
+    value_loss = 0
+    gae = torch.zeros(1, 1)
+    if gpu_id >= 0:
+        with torch.cuda.device(gpu_id):
+            gae = gae.cuda()
+    for i in reversed(range(len(exps['rewards']))):
+        R = gamma * R + exps['rewards'][i]
+        advantage = R - v_batch[i]
+        value_loss = value_loss + 0.5 * advantage.pow(2)
+
+        delta_t = (
+            exps['rewards'][i]
+            + gamma * v_batch[i + 1].detach()
+            - v_batch[i].detach()
+        )
+
+        gae = gae * gamma * tau + delta_t
+
+        policy_loss = (
+            policy_loss
+            - log_pi_batch[i] * gae
+            - beta * entropies[i]
+        )
+
+    return dict(
+        total_loss=policy_loss + 0.5*value_loss, 
         policy_loss=policy_loss, 
         value_loss=value_loss
         )

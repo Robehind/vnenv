@@ -1,3 +1,5 @@
+import os
+os.environ["OMP_NUM_THREADS"] = '1'
 from tensorboardX import SummaryWriter
 import time
 import trainers
@@ -9,12 +11,11 @@ import optimizers
 import torch
 from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide
-import os
 from utils.env_wrapper import make_envs, VecEnv
 import numpy as np
 def main():
     #读取参数
-    from exp_args.a2c_lite_args import args
+    from exp_args.a2c_demo_args import args
     #生成实验文件夹
     start_time = time.time()
     time_str = time.strftime(

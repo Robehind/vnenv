@@ -32,8 +32,9 @@ class OriSavnAgent:
             ]
         self.probs = gpuify(torch.zeros((1, len(self.actions))), gpu_id)
         self.learned_input = None#注意这个东西在外部重置的，不重置就会一直增加啊
-        self.pi_batch = []
+        self.log_pi_batch = []
         self.v_batch = []
+        self.entropies = []
 
     def model_forward(self, obs, batch_opt = False, params = None):
 
@@ -46,28 +47,31 @@ class OriSavnAgent:
         model_input['hidden'] = self.hidden
         model_input['action_probs'] = self.probs
         out = self.model.forward(model_input, params)
-        
+        out['prob'] = F.softmax(out['policy'], dim = 1)
+        out['log_prob'] = F.log_softmax(out['policy'], dim = 1)
+        out['entropy'] = (-out['log_prob'] * out['prob']).sum(1)
         return out
 
     def action(self, env_state, params = None):
         
         out = self.model_forward(env_state, params = params)
-        pi, v, self.hidden = out['policy'], out['value'], out['hidden']
-        self.pi_batch.append(pi)
-        self.v_batch.append(v)
+        self.probs, self.hidden = out['prob'], out['hidden']
+        
+        self.v_batch.append(out['value'])
+        self.entropies.append(out['entropy'])
         #softmax,形成在动作空间上的分布
-        prob = F.softmax(pi, dim = 1)
-        self.probs = prob
         #采样
-        action_idx = prob.multinomial(1).cpu().item()
+        action_idx = out['prob'].multinomial(1)
 
-        res = torch.cat((self.hidden[0], prob), dim=1)
+        self.log_pi_batch.append(out['log_prob'].gather(1,action_idx))
+
+        res = torch.cat((self.hidden[0], out['prob']), dim=1)
         if self.learned_input is None:
             self.learned_input = res
         else:
             self.learned_input = torch.cat((self.learned_input, res), dim=0)
 
-        return self.actions[action_idx], action_idx
+        return self.actions[action_idx.cpu().item()], action_idx
     
     def clear_mems(self):
         self.hidden = [
@@ -75,8 +79,9 @@ class OriSavnAgent:
                 self.hidden[1].detach(),
             ]
         self.probs = self.probs.detach()
-        self.pi_batch = []
+        self.log_pi_batch = []
         self.v_batch = []
+        self.entropies = []
         self.learned_input = None
     
     def sync_with_shared(self, shared_model):

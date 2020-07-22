@@ -1,3 +1,5 @@
+import os
+os.environ["OMP_NUM_THREADS"] = '1'
 import torch.multiprocessing as mp
 from tensorboardX import SummaryWriter
 import time
@@ -11,7 +13,6 @@ from tqdm import tqdm
 from utils.mean_calc import ScalarMeanTracker
 from utils.thordata_utils import get_scene_names, get_type
 from utils.model_search import search_newest_model
-import os
 
 def main():
     #读取参数

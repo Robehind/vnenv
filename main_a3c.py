@@ -1,3 +1,7 @@
+import os
+#os.environ["MKL_NUM_THREADS"] = '4'
+#os.environ["NUMEXPR_NUM_THREADS"] = '4'
+os.environ["OMP_NUM_THREADS"] = '1'
 import torch.multiprocessing as mp
 from tensorboardX import SummaryWriter
 import ctypes
@@ -12,11 +16,10 @@ import torch
 from tqdm import tqdm
 from utils.mean_calc import ScalarMeanTracker
 from utils.thordata_utils import get_scene_names, random_divide
-import os
 
 def main():
     #读取参数
-    from exp_args.a3c_lite_args import args
+    from exp_args.a3c_gcn_savn import args
     #生成日志文件
     #生成实验文件夹
     start_time = time.time()

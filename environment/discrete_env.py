@@ -94,7 +94,7 @@ class DiscreteEnvironment:
         #self.agent_state的数据格式沿用AgentPoseState
         self.agent_state = None
         self.start_state = None
-        self.last_agent_state = None
+        #self.last_agent_state = None
         self.last_action = None
         self.last_opt = None
         self.last_opt_success = True
@@ -343,7 +343,7 @@ class DiscreteEnvironment:
 
         self.action_interpret(self.action_dict[action])
         self.his_states = [str(self.agent_state)] + self.his_states[1:]
-        self.last_agent_state = copy.deepcopy(self.agent_state)
+        #self.last_agent_state = copy.deepcopy(self.agent_state)
         self.steps += 1
         self.last_action = action
         #分析events，给reward

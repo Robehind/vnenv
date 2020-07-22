@@ -1,3 +1,5 @@
+import os
+os.environ["OMP_NUM_THREADS"] = '1'
 import time
 import trainers
 import models
@@ -7,7 +9,6 @@ import optimizers
 import torch
 from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide, get_type
-import os
 from utils.env_wrapper import make_envs, VecEnv
 from trainers.loss_functions import a2c_loss
 import numpy as np
@@ -16,8 +17,8 @@ from utils.model_search import search_newest_model
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a3c_savn_base import args
-    args.agent = 'A2CLstmAgent'#TODO
+    from exp_args.random_args import args
+    #args.agent = 'A2CLstmAgent'#TODO
 
     #生成测试文件夹
     start_time = time.time()
