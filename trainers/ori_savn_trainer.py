@@ -12,6 +12,7 @@ def ori_savn_train(
     result_queue,
     end_flag,#多线程停止位
     shared_model,
+    optimizer,
     creator,
     loss_func,
     chosen_scene_names = None,
@@ -49,10 +50,6 @@ def ori_savn_train(
     #initialize a runner
     runner = creator['runner'](
         args.nsteps, 1, env, agent
-    )
-    optim = creator['optimizer'](
-        shared_model.parameters(),
-        **args.optim_args
     )
     #n_frames = 0
     #update_frames = args.nsteps
@@ -135,7 +132,7 @@ def ori_savn_train(
         )
 
         transfer_gradient_to_shared(meta_gradient, shared_model, gpu_id)
-        optim.step()
+        optimizer.step()
         #model.zero_grad()
         
         results = runner.pop_mems()

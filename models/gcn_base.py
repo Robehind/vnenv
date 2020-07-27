@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .gcn_model import GCN
-
+from utils.net_utils import weights_init, norm_col_init
 class GcnBaseModel(torch.nn.Module):
     """LSTM的隐藏状态不能由model自己来管理因为在a2c里一个模型会用于跑多个epi，不同的epi
     的隐藏状态不同"""
@@ -38,16 +38,16 @@ class GcnBaseModel(torch.nn.Module):
         self.critic_linear = nn.Linear(hidden_state_sz, 1)
         self.actor_linear = nn.Linear(hidden_state_sz, num_outputs)
 
-        #self.apply(weights_init)
+        self.apply(weights_init)
         relu_gain = nn.init.calculate_gain("relu")
         self.conv1.weight.data.mul_(relu_gain)
-        # self.actor_linear.weight.data = norm_col_init(
-        #     self.actor_linear.weight.data, 0.01
-        # )
+        self.actor_linear.weight.data = norm_col_init(
+            self.actor_linear.weight.data, 0.01
+        )
         self.actor_linear.bias.data.fill_(0)
-        # self.critic_linear.weight.data = norm_col_init(
-        #     self.critic_linear.weight.data, 1.0
-        # )
+        self.critic_linear.weight.data = norm_col_init(
+            self.critic_linear.weight.data, 1.0
+        )
         self.critic_linear.bias.data.fill_(0)
 
         self.lstm.bias_ih.data.fill_(0)
@@ -193,17 +193,24 @@ class GcnBaseModel(torch.nn.Module):
         #     embedding=image_embedding,
         # )
 if __name__ == "__main__":
-    model = GcnBaseModel(9)
+    model = GcnBaseModel(3)
     input_ = {
         'res18fm':torch.randn(4,512,7,7),
         'score':torch.randn(4,1000),
-        'action_probs':torch.randn(4,9),
+        'action_probs':torch.randn(4,3),
         'hidden':(torch.randn(4,512), torch.randn(4,512)),
         'glove':torch.randn(4,300)
     }
     
-    aa =  dict(model.named_parameters())
-    cc = aa.copy()
+    cc = {}
+    for name, param in model.named_parameters():
+        # Clone and detach.
+        param_copied = param.clone().detach().requires_grad_(True)
+        cc[name] = param_copied
+    out = model.forward(input_)
+    print(out['value'])
+    #out['value'].mean().backward()
+    #out = model.forward(input_)
+    #print(out['value'])
     out = model.forward(input_, cc)
-    print(out['policy'])
     print(out['value'])

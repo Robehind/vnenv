@@ -64,7 +64,7 @@ def a2c_loss(
         R = r + gamma * R * mask
         td_target.append(R)
 
-    td_target = torch.FloatTensor(td_target[::-1]).reshape(-1,1)
+    td_target = torch.FloatTensor(td_target[::-1]).reshape(-1, 1)
     td_target = gpuify(td_target, gpu_id)
 
     a_batch = torch.tensor(exps['action_idxs']).reshape(-1, 1)
@@ -123,7 +123,7 @@ def savn_loss(
         )
 
     return dict(
-        total_loss=policy_loss + 0.5*value_loss, 
-        policy_loss=policy_loss, 
+        total_loss=policy_loss + 0.5*value_loss,
+        policy_loss=policy_loss,
         value_loss=value_loss
         )
