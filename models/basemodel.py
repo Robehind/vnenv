@@ -32,6 +32,7 @@ class BaseModel(torch.nn.Module):
         num_outputs = action_sz
         self.critic_linear = nn.Linear(hidden_state_sz, 1)
         self.actor_linear = nn.Linear(hidden_state_sz, num_outputs)
+        self.action_predict_linear = nn.Linear(2 * lstm_input_sz, action_sz)
 
         #self.apply(weights_init)
         relu_gain = nn.init.calculate_gain("relu")
@@ -173,3 +174,24 @@ class BaseModel(torch.nn.Module):
         #     hidden=(hx, cx),
         #     embedding=image_embedding,
         # )
+if __name__ == "__main__":
+    model = BaseModel(3)
+    input_ = {
+        'res18fm':torch.randn(4,512,7,7),
+        'action_probs':torch.randn(4,3),
+        'hidden':(torch.randn(4,512), torch.randn(4,512)),
+        'glove':torch.randn(4,300)
+    }
+    
+    cc = {}
+    for name, param in model.named_parameters():
+        # Clone and detach.
+        param_copied = param.clone().detach().requires_grad_(True)
+        cc[name] = param_copied
+    out = model.forward(input_)
+    print(out['value'])
+    #out['value'].mean().backward()
+    #out = model.forward(input_)
+    #print(out['value'])
+    out = model.forward(input_)
+    print(out['value'])

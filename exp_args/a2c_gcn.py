@@ -4,7 +4,7 @@ args.update(
     train_scenes = {'kitchen':'1-8',},
     train_targets = {'kitchen':["Toaster", "Microwave", "Fridge", "CoffeeMachine", "GarbageCan", "Bowl"],},
     test_scenes = {'kitchen':'9-15',},
-    test_targets = {'bedroom':["Mug","Pot","Cup"]},
+    test_targets = {'kitchen':["Mug","Pot","Cup"]},
     action_dict = {
         'MoveAhead':['m0'],
         'TurnLeft':['r-90'],

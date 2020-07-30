@@ -16,7 +16,7 @@ from utils.model_search import search_newest_model
 
 def main():
     #读取参数
-    from exp_args.savn_args import args
+    from exp_args.a3c_lite_args import args
 
     #生成测试文件夹
     start_time = time.time()

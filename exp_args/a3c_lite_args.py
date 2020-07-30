@@ -1,7 +1,10 @@
 from .default_args import args
 
 args.update(
-    train_scenes = {'kitchen':'25',},#{'bathroom':[31],},
+    #train_scenes = {'kitchen':'25',},#{'bathroom':[31],},
+    train_scenes = {
+        'kitchen':'25'
+        },#{'bathroom':[31],},
     train_targets = {'kitchen':["Microwave", 'Sink'],},
     test_scenes = {'kitchen':'25',},#{'bathroom':[31],},
     test_targets = {'kitchen':["Microwave", 'Sink'],},
@@ -24,21 +27,22 @@ args.update(
     total_train_frames = 80000,
     total_eval_epi = 1000,
     threads = 4,
-    exp_name = 'A3C_kitchen_2targets',
+    exp_name = 'A3CLiteDemo',
     optimizer = 'Adam',
     model = 'LiteModel',
     agent = 'A3CAgent',
     runner = 'A3CRunner',
     loss_func = 'a2c_loss',
     trainer = 'a3c_train',
+    tester = 'a3c_test',
     optim_args = dict(lr = args.lr,),
     print_freq = 1000,
     max_epi_length = 100,
     model_save_freq = 80000,
-    nsteps = 40,
+    nsteps = 20,
     verbose = False,
     gpu_ids = -1,
-    results_json = "result_a3c_k25t2.json"
+    results_json = "result.json"
 )
 model_args_dict = dict(
         action_sz = len(args.action_dict),

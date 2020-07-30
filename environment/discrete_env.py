@@ -417,7 +417,7 @@ class DiscreteEnvironment:
         #file loader
         nx = importlib.import_module("networkx")
         json_graph_loader = importlib.import_module("networkx.readwrite")
-        with open(os.path.join(self.offline_data_dir,self.scene_name,'graph.json'),'r') as f:
+        with open(os.path.join(self.offline_data_dir,self.scene_name,'threeACT_graph.json'),'r') as f:
             graph_json = json.load(f)
         graph = json_graph_loader.node_link_graph(graph_json).to_directed()
         start_state = self.start_state
@@ -435,8 +435,8 @@ class DiscreteEnvironment:
             except nx.NodeNotFound:
                 print(self.scene_name)
                 path = nx.shortest_path(graph, str(start_state), k)
-            #path_len = len(path) - 1
-            path_len = len(path)
+            path_len = len(path) - 1
+            #path_len = len(path)
             if path_len < best_path_len:
                 best_path = path
                 best_path_len = path_len

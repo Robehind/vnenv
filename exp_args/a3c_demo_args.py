@@ -1,15 +1,21 @@
 from .default_args import args
 
 args.update(
-    train_scenes = {'kitchen':'25',},#{'bathroom':[31],},
-    train_targets = {'kitchen':["Microwave"],},
+    # train_scenes = {
+    #     'kitchen':'25',
+    #     },#{'bathroom':[31],},
+    # train_targets = {'kitchen':["Microwave"],},
     test_scenes = {'kitchen':'25',},#{'bathroom':[31],},
     test_targets = {'kitchen':["Microwave"],},
     action_dict = {
         'MoveAhead':['m0'],
-        'TurnLeft':['r-90'],
-        'TurnRight':['r90'],
-        #'BackOff':['m180']
+        'TurnLeft':['r-45'],
+        'TurnRight':['r45'],
+        'LookUp':['p-30'],
+        'LookDown':['p30'],
+        'Done':None,
+        #'Done':None,#Done动作一定必须绑定为None
+        #包含Done字符串时，需要智能体自主提出结束episode，不包含时环境会自动判定是否结束
     },
     obs_dict = {
         'fc':'resnet50_fc_new.hdf5',
@@ -17,10 +23,10 @@ args.update(
         },
     target_dict = {},
     grid_size = 0.25,
-    rotate_angle = 90,
+    rotate_angle = 45,
     total_train_frames = 40000,
     total_eval_epi = 1000,
-    threads = 4,
+    threads = 3,
     exp_name = 'A3CDemoModel',
     optimizer = 'Adam',
     model = 'DemoModel',
@@ -34,9 +40,9 @@ args.update(
     model_save_freq = 40000,
     nsteps = 20,
     verbose = False,
-    gpu_ids = -1,
+    gpu_ids = [0],
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
-    results_json = "result_demo40000.json"
+    results_json = "result_demo.json"
 )
 model_args_dict = {'action_size' : len(args.action_dict)}
 args.update(

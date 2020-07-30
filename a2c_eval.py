@@ -17,8 +17,9 @@ from utils.model_search import search_newest_model
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.random_args import args
+    from exp_args.a3c_lite_args import args
     #args.agent = 'A2CLstmAgent'#TODO
+    args.agent = 'A2CAgent'
 
     #生成测试文件夹
     start_time = time.time()

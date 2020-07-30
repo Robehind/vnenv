@@ -19,6 +19,8 @@ class SAVN(BaseModel):
 
         self.feature_size = 512 + action_sz
         self.learned_input_sz = 512 + action_sz
+        self.ll_key = nn.Linear(self.feature_size, self.feature_size)
+        self.ll_linear = nn.Linear(self.feature_size, self.feature_size)
 
         self.num_steps = nsteps
         #self.ll_key = nn.Linear(self.feature_size, self.feature_size)

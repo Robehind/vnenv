@@ -47,9 +47,11 @@ class LiteModel(torch.nn.Module):
 
 if __name__ == "__main__":
     model = LiteModel(4,2048,300)
-    input1 = torch.randn(3,2048)
+    input1 = torch.randn(1,2048)
     input2 = torch.randn(1,300)
-    print(input2)
+    out = model.forward(dict(fc=input1, glove=input2))
+    print(out['policy'])
+    print(out['value'])
     out = model.forward(dict(fc=input1, glove=input2))
     print(out['policy'])
     print(out['value'])

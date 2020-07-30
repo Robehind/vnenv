@@ -19,7 +19,7 @@ from utils.thordata_utils import get_scene_names, random_divide
 
 def main():
     #读取参数
-    from exp_args.a3c_gcn_savn import args
+    from exp_args.a3c_lite_args import args
     #生成日志文件
     #生成实验文件夹
     start_time = time.time()
@@ -54,7 +54,12 @@ def main():
     shared_model = creator['model'](**args.model_args)
     if shared_model is not None:
         shared_model.share_memory()
-        #optimizer.share_memory()
+        optimizer = None
+        if 'Shared' in args.optimizer or 'shared' in args.optimizer:
+            optimizer = creator['optimizer'](
+                filter(lambda p: p.requires_grad, shared_model.parameters()), **args.optim_args
+            )
+            optimizer.share_memory()
         print(shared_model)
     # 读取存档点，读取最新存档模型的参数到shared_model。其余线程会自动使用sync函数来同步
     if args.load_model_dir is not '':
@@ -87,10 +92,11 @@ def main():
                 result_queue,
                 end_flag,
                 shared_model,
+                optimizer,
                 creator,
                 loss_func,
                 scene_names_div[thread_id],
-                chosen_objects,
+                chosen_objects,  
             ),
         )
         p.start()

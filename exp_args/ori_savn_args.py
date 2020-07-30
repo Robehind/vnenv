@@ -1,11 +1,7 @@
 from .default_args import args
 
 args.update(
-    # train_scenes = {
-    #     'kitchen':'1-20',
-
-    #     },#{'bathroom':[31],},
-    # train_targets = {'kitchen':["Microwave"],},
+    
     test_scenes = {
         #'kitchen':'21-30',
         'living_room':'21-30',
@@ -46,13 +42,13 @@ args.update(
     total_train_frames = 40000,
     total_eval_epi = 100,
     threads = 1,
-    exp_name = 'savn',
+    exp_name = 'ori_savn',
     optimizer = 'RMSprop',
     model = 'SAVN',
-    agent = 'SavnAgent',
+    agent = 'OriSavnAgent',
     runner = 'SavnRunner',
-    loss_func = 'a3c_loss',
-    trainer = 'savn_train',
+    loss_func = 'savn_loss',
+    trainer = 'ori_savn_train',
     tester = 'savn_test',
     optim_args = dict(lr = 0.0001, alpha = 0.99, eps = 0.1),
     inner_lr = 0.0001,

@@ -11,6 +11,7 @@ def a3c_train(
     result_queue,
     end_flag,#多线程停止位
     shared_model,
+    optim,
     creator,
     loss_func,
     chosen_scene_names = None,
@@ -56,10 +57,11 @@ def a3c_train(
     runner = creator['runner'](
         args.nsteps, 1, env, agent
     )
-    optim = creator['optimizer'](
-        shared_model.parameters(),
-        **args.optim_args
-    )
+    if optim == None:
+        optim = creator['optimizer'](
+            shared_model.parameters(),
+            **args.optim_args
+        )
 
     #n_frames = 0
     #total_epis = 0
