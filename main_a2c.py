@@ -12,20 +12,11 @@ import torch
 from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide
 from utils.env_wrapper import make_envs, VecEnv
+from utils.init_func import get_args, make_exp_dir
 import numpy as np
 def main():
     #读取参数
-    from exp_args.a2c_demo_args import args
-    #生成实验文件夹
-    start_time = time.time()
-    time_str = time.strftime(
-        "%y%m%d_%H%M%S", time.localtime(start_time)
-    )
-    args.exp_dir = os.path.join(args.exps_dir, args.exp_name + '_' + time_str)
-    if not os.path.exists(args.exp_dir):
-        os.makedirs(args.exp_dir)
-    #保存本次实验的参数
-    args.save_args(os.path.join(args.exp_dir, 'args.json'))
+    args = get_args(os.path.basename(__file__))
     #确认gpu可用情况
     if args.gpu_ids == -1:
         args.gpu_ids = [-1]
@@ -46,12 +37,10 @@ def main():
     trainer = getattr(trainers, args.trainer)
     loss_func = getattr(trainers, args.loss_func)
 
-    #生成全局模型并初始化优化算法
+    #生成全局模型
     model = creator['model'](**args.model_args)
-    if model is not None:
-        #optimizer.share_memory()
-        print(model)
-    # 读取存档点，读取最新存档模型的参数到shared_model。其余线程会自动使用sync函数来同步
+    if model is not None: print(model)
+    #TODO 读取存档点，读取最新存档模型的参数到model
     if args.load_model_dir is not '':
         print("load %s"%args.load_model_dir)
         model.load_state_dict(torch.load(args.load_model_dir))
@@ -73,8 +62,6 @@ def main():
         args.threads,
         gpu_id
     )
-    if args.verbose:
-        print('agent created')
 
     #生成多线程环境，每个线程可以安排不同的房间或者目标
     env_fns = []
@@ -101,6 +88,8 @@ def main():
         agent
     )
 
+    #生成实验文件夹
+    make_exp_dir(args)
     #初始化TX
     tx_writer = SummaryWriter(log_dir = args.exp_dir)
     #training

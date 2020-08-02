@@ -1,6 +1,12 @@
 from .default_args import args
 
 args.update(
+    test_scenes = {
+        'kitchen':'21-30',
+        'living_room':'21,24-30',
+        'bedroom':'21-30',
+        'bathroom':'21-30',
+    },
     action_dict = {
         'MoveAhead':['m0'],
         'TurnLeft':['r-45'],
@@ -24,11 +30,11 @@ args.update(
     model = 'DemoModel',
     agent = 'RandomAgent',
     runner = 'A2CRunner',
-    loss_func = 'a2c_loss',
+    loss_func = 'basic_loss',
     trainer = 'a2c_train',
     optim_args = dict(lr = args.lr,),
     print_freq = 1000,
-    max_epi_length = 250,
+    max_epi_length = 200,
     model_save_freq = 40000,
     nsteps = 10,
     verbose = False,

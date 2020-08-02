@@ -4,7 +4,7 @@ import torch
 from trainers.train_util import get_params, transfer_gradient_to_shared, SGD_step
 from utils.mean_calc import ScalarMeanTracker
 from utils.env_wrapper import SingleEnv
-
+from utils.thordata_utils import get_type
 
 def savn_test(
     args,
@@ -103,9 +103,10 @@ def savn_test(
                         'ep_length:':thread_steps,
                         'SR:':info['success'],
                         'SPL:':spl,
-                        'total_reward:':thread_reward
+                        'total_reward:':thread_reward,
+                        'epis':1
                     }
-                    target_str = info['scene_name']+'/'+info['target']
+                    target_str = get_type(info['scene_name'])+'/'+info['target']
                     res = {
                         info['scene_name']:data,
                         target_str:data

@@ -32,7 +32,7 @@ args.update(
     model = 'DemoModel',
     agent = 'A3CAgent',
     runner = 'A3CRunner',
-    loss_func = 'a2c_loss',
+    loss_func = 'basic_loss',
     trainer = 'a3c_train',
     optim_args = dict(lr = args.lr,),
     print_freq = 1000,
@@ -42,7 +42,6 @@ args.update(
     verbose = False,
     gpu_ids = [0],
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
-    results_json = "result_demo.json"
 )
 model_args_dict = {'action_size' : len(args.action_dict)}
 args.update(

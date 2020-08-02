@@ -53,7 +53,7 @@ args.update(
     model = 'BaseModel',
     agent = 'A3CLstmAgent',
     runner = 'A3CRunner',
-    loss_func = 'a2c_loss',
+    loss_func = 'basic_loss',
     trainer = 'a3c_train',
     optim_args = dict(lr = 0.0001, alpha = 0.99, eps = 0.1),
     print_freq = 1000,

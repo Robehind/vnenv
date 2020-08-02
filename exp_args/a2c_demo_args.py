@@ -28,7 +28,7 @@ args.update(
     model = 'DemoModel',
     agent = 'A2CAgent',
     runner = 'A2CRunner',
-    loss_func = 'a2c_loss',
+    loss_func = 'basic_loss',
     trainer = 'a2c_train',
     optim_args = dict(lr = args.lr,),
     print_freq = 1000,

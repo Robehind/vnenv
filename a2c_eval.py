@@ -8,41 +8,16 @@ import environment as env
 import optimizers
 import torch
 from tqdm import tqdm
-from utils.thordata_utils import get_scene_names, random_divide, get_type
+from utils.thordata_utils import get_scene_names, random_divide, get_type, get_test_set
 from utils.env_wrapper import make_envs, VecEnv
-from trainers.loss_functions import a2c_loss
 import numpy as np
-from utils.mean_calc import ScalarMeanTracker
-from utils.model_search import search_newest_model
+from utils.mean_calc import ScalarMeanTracker, LabelScalarTracker
+from utils.init_func import search_newest_model, get_args, make_exp_dir, load_or_find_model
+from utils.record_utils import data_output
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a3c_lite_args import args
-    #args.agent = 'A2CLstmAgent'#TODO
-    args.agent = 'A2CAgent'
-
-    #生成测试文件夹
-    start_time = time.time()
-    time_str = time.strftime(
-        "%y%m%d_%H%M%S", time.localtime(start_time)
-    )
-    args.exp_dir = os.path.join(args.exps_dir, 'TEST'+args.exp_name + '_' + time_str)
-    if not os.path.exists(args.exp_dir):
-        os.makedirs(args.exp_dir)
-
-    # 通过指定路径寻找参数或者自动寻找最新模型
-    if args.load_model_dir is not '':
-        print("load %s"%args.load_model_dir)
-    else:
-        find_path = search_newest_model(args.exps_dir, args.exp_name)
-        if find_path is not None:
-            print("Searched the neweset model: %s"%find_path)
-            args.load_model_dir = find_path
-        else:
-            print("Can't find a neweset model. Load Nothing.")
-
-    #保存本次测试的参数
-    args.save_args(os.path.join(args.exp_dir, 'args.json'))
+    args = get_args(os.path.basename(__file__))
 
     #确认gpu可用情况
     if args.gpu_ids == -1:
@@ -61,39 +36,13 @@ def main():
     }
     #生成全局模型并加载参数
     model = creator['model'](**args.model_args)
-    if model is not None:
-        print(model)
-    if args.load_model_dir is not '':
-        model.load_state_dict(torch.load(args.load_model_dir))
+    if model is not None:  print(model)
+    load_dir = load_or_find_model(args)
+    if load_dir is not '':
+        model.load_state_dict(torch.load(load_dir))
 
     #这里用于分配各个线程的环境可以加载的场景以及目标
-    sche = {}
-    chosen_scene_names = get_scene_names(args.test_scenes)
-    chosen_objects = args.test_targets
-    test_set_div = None
-    if args.test_sche_dir == '':
-        scene_names_div, nums_div = random_divide(
-            args.total_eval_epi, chosen_scene_names, args.threads
-            )
-        #total_epi = args.total_eval_epi
-    else:
-        print('Using Test Schedule at ',args.test_sche_dir)
-        total_epi = 0
-        scene_names_div = []
-        #是按照chosen scene names指定的房间类型加载json的，所以不能只单单指定一个路径
-        for k in chosen_scene_names:
-            pa = os.path.join(args.test_sche_dir,k+'_test_set.json')
-            import json
-            with open(pa, 'r') as f:
-                sche[k] = json.load(f)
-            total_epi += len(sche[k])
-        args.total_eval_epi = total_epi
-        test_set_div , nums_div = random_divide(total_epi, sche, args.threads)
-        for i in range(args.threads):
-            scene_names_div.append(set())
-            for x in test_set_div[i]:
-                scene_names_div[i].add(x[0])
-            scene_names_div[i] = list(scene_names_div[i])
+    scene_names_div, chosen_objects, nums_div, test_set_div = get_test_set(args)
 
     #生成多线程环境，每个线程可以安排不同的房间或者目标
     agent = creator['agent'](
@@ -123,19 +72,14 @@ def main():
         env_fns.append(make_envs(env_args, creator['env']))
     envs = VecEnv(env_fns, eval_mode = True, test_sche = test_set_div)
 
+    #生成实验文件夹
+    make_exp_dir(args, 'TEST')
 
     n_epis_thread = [0 for _ in range(args.threads)]
     thread_steps = [0 for _ in range(args.threads)]
     thread_reward = [0 for _ in range(args.threads)]
 
-    all_scenes = [x for i in chosen_scene_names.values() for x in i]
-    all_targets = [
-        y+'/'+x 
-        for i in chosen_objects
-        for y in chosen_scene_names[i] 
-        for x in chosen_objects[i] 
-        ]
-    test_scalars = {k:ScalarMeanTracker() for k in all_scenes + all_targets}
+    test_scalars = LabelScalarTracker()
 
     pbar = tqdm(total=args.total_eval_epi)
     obs = envs.reset()
@@ -163,16 +107,12 @@ def main():
                         'ep_length:':thread_steps[i],
                         'SR:':t_info['success'],
                         'SPL:':spl,
-                        'total_reward:':thread_reward[i]
+                        'total_reward:':thread_reward[i],
+                        'epis':1
                     }
-                    target_str = t_info['scene_name']+'/'+t_info['target']
-                    res = {
-                        t_info['scene_name']:data,
-                        target_str:data
-                    }
-                    for k in res:
-                        test_scalars[k].add_scalars(res[k])
-                        test_scalars[k].add_scalars(dict(epis=1), False)
+                    target_str = get_type(t_info['scene_name'])+'/'+t_info['target']
+                    for k in [t_info['scene_name'], target_str]:
+                        test_scalars[k].add_scalars(data)
                     thread_steps[i] = 0
                     thread_reward[i] = 0
                     agent.reset_hidden(i)
@@ -181,65 +121,7 @@ def main():
     envs.close()
     pbar.close()
     
-    total_scalars = {k:ScalarMeanTracker() for k in chosen_scene_names}
-    scene_split = {k:{} for k in chosen_scene_names}
-    target_split = {
-        k:{i:ScalarMeanTracker() for i in chosen_objects[k]} 
-        for k in chosen_scene_names
-        }
-    result = {k:v.pop_and_reset() for k,v in test_scalars.items()}
-
-    for k in result:
-        k_sp = k.split('/')
-        s_type = get_type(k_sp[0])
-        if result[k] == {}:
-            continue
-        if len(k_sp) == 1:
-            scene_split[s_type][k] = result[k].copy()
-            epis = result[k].pop('epis')
-            total_scalars[s_type].add_scalars(result[k])
-            total_scalars[s_type].add_scalars(dict(epis=epis), False)
-        else:
-            epis = result[k].pop('epis')
-            target_split[s_type][k_sp[-1]].add_scalars(result[k])
-            target_split[s_type][k_sp[-1]].add_scalars(dict(epis=epis), False)
-    
-    for k in target_split:
-        for t in chosen_objects[k]:
-            target_split[k][t] = target_split[k][t].pop_and_reset()
-        total_scalars[k] = total_scalars[k].pop_and_reset()
-    
-    import json
-    for k in scene_split:
-        tmp = dict(Total = total_scalars[k].copy())
-        scene_split[k].update(target_split[k])
-        tmp.update(scene_split[k])
-        result_path = os.path.join(args.exp_dir, k+'_'+args.results_json)
-        with open(result_path, "w") as fp:
-            json.dump(tmp, fp, indent=4)
-
-    all_objs = list(set([x for i in chosen_objects.values() for x in i]))
-    all_objs.sort()
-    total_t = {x:ScalarMeanTracker() for x in all_objs} 
-    total_s = ScalarMeanTracker()
-
-    for k in target_split:
-        for t in target_split[k]:
-            if target_split[k][t] == {}:
-                continue
-            epis = target_split[k][t].pop('epis')
-            total_t[t].add_scalars(target_split[k][t])
-            total_t[t].add_scalars(dict(epis=epis), False)
-        epis = total_scalars[k].pop('epis')    
-        total_s.add_scalars(total_scalars[k])
-        total_s.add_scalars(dict(epis=epis), False)
-    total_s = dict(Total = total_s.pop_and_reset())
-    for k in total_t:
-        total_t[k] = total_t[k].pop_and_reset()
-    total_s.update(total_t)
-    result_path = os.path.join(args.exp_dir, 'Total_'+args.results_json)
-    with open(result_path, "w") as fp:
-        json.dump(total_s, fp, indent=4)
+    data_output(args, test_scalars)
 
 if __name__ == "__main__":
     main()

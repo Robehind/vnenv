@@ -6,7 +6,7 @@ from utils.net_utils import toFloatTensor
 from utils.net_utils import gpuify
 #让agent可以知道动作的字符串，也许在未来有作用
 class A2CLstmAgent:
-    """lstm智能体"""
+    """A2Clstm智能体"""
     def __init__(
         self,
         action_str,

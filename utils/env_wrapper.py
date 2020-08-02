@@ -58,11 +58,13 @@ _NP_TO_CT = {np.dtype(np.float32): ctypes.c_float,
              np.dtype(np.bool): ctypes.c_bool}
 
 def make_envs(env_args, env_class):
+    """预封装环境的生成函数，为生成多线程环境服务的"""
     def _env_func():
         return env_class(**env_args)
     return _env_func
 
 class SingleEnv:
+    """对单线程环境的再封装，目的是为了和vecenv统一数据(把target和obs塞一起了)以及实现测试序列"""
     def __init__(self, env, eval_mode = False):
         self.env = env
         self.eval_mode = eval_mode
@@ -91,8 +93,8 @@ class VecEnv:
     closed = False
     def __init__(self, env_fns, context='spawn', eval_mode = False, test_sche = None):
         """
-        If you don't specify observation_space, we'll have to create a dummy
-        environment to get it.
+        多线程环境。对env的一个封装，输入的是环境的构造函数.eval_model下会及算最短路，很慢。
+        test_sche不为None时可以进行测试序列。
         """
         ctx = mp.get_context(context)
         env = env_fns[0]()

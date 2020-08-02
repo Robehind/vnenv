@@ -26,7 +26,7 @@ args.update(
     model = 'ScenePriorsModel',
     agent = 'A2CAgent',
     runner = 'A2CRunner',
-    loss_func = 'a2c_loss',
+    loss_func = 'basic_loss',
     trainer = 'a2c_train',
     optim_args = dict(lr = 0.0007, alpha = 0.99, eps = 0.1),
     print_freq = 1000,

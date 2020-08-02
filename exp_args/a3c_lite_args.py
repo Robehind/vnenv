@@ -10,8 +10,8 @@ args.update(
     test_targets = {'kitchen':["Microwave", 'Sink'],},
     action_dict = {
         'MoveAhead':['m0'],
-        'TurnLeft':['r-90'],
-        'TurnRight':['r90'],
+        'TurnLeft':['r-45'],
+        'TurnRight':['r45'],
         #'BackOff':['m180']
         #'Done':None,
     },
@@ -23,7 +23,7 @@ args.update(
         'glove':'../thordata/word_embedding/word_embedding.hdf5',
     },
     grid_size = 0.25,
-    rotate_angle = 90,
+    rotate_angle = 45,
     total_train_frames = 80000,
     total_eval_epi = 1000,
     threads = 4,
@@ -32,7 +32,7 @@ args.update(
     model = 'LiteModel',
     agent = 'A3CAgent',
     runner = 'A3CRunner',
-    loss_func = 'a2c_loss',
+    loss_func = 'basic_loss',
     trainer = 'a3c_train',
     tester = 'a3c_test',
     optim_args = dict(lr = args.lr,),

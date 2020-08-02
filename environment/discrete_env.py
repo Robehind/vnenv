@@ -10,10 +10,10 @@ from .agent_pose_state import get_state_from_str
 from utils.thordata_utils import get_type
 #改成私有变量
 class DiscreteEnvironment:
-    """读取数据集，模拟交互，按照dict的组织和标识来返回数据和信息。
-       所有数据都是用np封装的"""
-    #grid_file_name = "grid.json"
-    #graph_file_name = "graph.json"
+    """
+    使用thordata的离散环境。
+    读取数据集，模拟交互，按照dict的组织和标识来返回数据和信息。
+    所有数据都是用np封装的"""
     visible_file_name = "visible_object_map.json"
     trans_file_name = 'trans.json'
     def __init__(
@@ -51,6 +51,7 @@ class DiscreteEnvironment:
         chosen_targets = None,
         #默认值为None时取当前房间里有的里随机一个。
         #人类必须自己保证这个列表里的目标合法，例如受glove支持，在房间中可以被找到，等等
+        reset_sche = None,#TODO
         debug = False,
     ):
         self.actions = list(action_dict.keys())
@@ -179,6 +180,10 @@ class DiscreteEnvironment:
         allow_no_target = False,
         calc_best_len = False
         ):
+        """重置环境.前三个参数如果保持为None，就会随机取。allow_no_target是是否允许在没有
+        设定目标的情况下运行环境。一般是不要允许的。calc_best_len也是暂时保留的参数，选择是否需要
+        计算最短路（很耗时，所以一般训练阶段会关掉的）
+        """
         if scene_name == None:
             scene_name = random.choice(self.chosen_scenes)
         assert scene_name in self.chosen_scenes
@@ -258,27 +263,31 @@ class DiscreteEnvironment:
             agent_state = get_state_from_str(agent_state)
         self.agent_state = agent_state
 
-    def states_where_visible(self, target_reper):
-        if target_reper == None:
+    def states_where_visible(self, target_str):
+        """根据目标的字符串来获取当前房间所有状态中可以见到这个目标的状态，返回列表"""
+        if target_str == None:
             return []
         tmp = []
         for k in self.all_objects_id:
-            if k.split("|")[0] == target_reper:
+            if k.split("|")[0] == target_str:
                 tmp.extend(self.visible_data[k])
         return tmp
 
     def get_obs(self, init = False):
         """返回obs。可能有多个，以初始化controller时的关键字为索引"""
         tmp = {}
-        for k,v in self.obs_loader.items():
-            if '|' in k:
-                tmp.update({
-                    k:np.array(
-                        [v[str(s)][:] for s in self.his_states[:int(k.split('|')[1])]]
-                        )
-                })
-            else:
-                tmp.update({k:v[str(self.agent_state)][:]})
+        try:
+            for k,v in self.obs_loader.items():
+                if '|' in k:
+                    tmp.update({
+                        k:np.array(
+                            [v[str(s)][:] for s in self.his_states[:int(k.split('|')[1])]]
+                            )
+                    })
+                else:
+                    tmp.update({k:v[str(self.agent_state)][:]})
+        except:
+            print(self.scene_name)
         return tmp
 
     def rotate(self, angle:int):
@@ -335,7 +344,7 @@ class DiscreteEnvironment:
                     break
 
     def step(self, action):
-
+        """env的核心功能，获得一个动作，进行相关的处理，向外输出观察以及其他信息"""
         if self.done and not self.debug:
             raise Exception('Should not interact with env when env is done')
         if not action in self.actions:
@@ -354,6 +363,7 @@ class DiscreteEnvironment:
         return self.get_obs(), self.reward, self.done, self.info
 
     def judge(self, action):
+        """判断一个动作应该获得的奖励，以及是否要停止"""
         #详细的奖惩设置都在这里
         done = False
         event = 'step'
@@ -379,12 +389,13 @@ class DiscreteEnvironment:
         return event, done
 
     def target_visiable(self):
+        """判断目标在当前位置是否可见"""
         if str(self.agent_state) in self.all_visible_states:
             return True
         return False
     
     def get_target_reper(self, target_str):
-        
+        """获取目标的表示，还不够完善"""
         if target_str == None:
             return None
         reper = {}
@@ -397,7 +408,8 @@ class DiscreteEnvironment:
 
     def get_data_of_obj(self, target_str, file_name, target_json='target.json'):
         '''获取一个目标的相关数据。通过检索能‘看见’这个目标的位置，来透过这个位置读取
-        hdf5文件，获取这个位置的‘状态’来作为目标的表示。用file-name来指定是哪种‘状态’'''
+        hdf5文件，获取这个位置的‘状态’来作为目标的表示。用file-name来指定是哪种‘状态’
+        '''
         all_objID = [k for k in self.all_objects_id if k.split("|")[0] == target_str]
         objID = random.choice(all_objID)
         tmp_loader = h5py.File(
@@ -412,12 +424,12 @@ class DiscreteEnvironment:
         return data
 
     def best_path_len(self):
-        """算最短路，用于计算spl."""
-        #如果房间里有复数个目标，还要计算找出离当前位置最近的那一个。。。
+        """算最短路，用于计算spl.未来考虑把最短路做成数据集直接读取，可以加快速度"""
+        #如果房间里有复数个目标，还要计算找出离当前位置最近的那一个
         #file loader
         nx = importlib.import_module("networkx")
         json_graph_loader = importlib.import_module("networkx.readwrite")
-        with open(os.path.join(self.offline_data_dir,self.scene_name,'threeACT_graph.json'),'r') as f:
+        with open(os.path.join(self.offline_data_dir,self.scene_name,'graph.json'),'r') as f:
             graph_json = json.load(f)
         graph = json_graph_loader.node_link_graph(graph_json).to_directed()
         start_state = self.start_state
@@ -444,6 +456,7 @@ class DiscreteEnvironment:
         return best_path, best_path_len
 
     def render(self):
+        """实验性的功能"""
         pic = self.get_obs()['image'][:]
         #RGB to BGR
         pic = pic[:,:,::-1]

@@ -9,10 +9,9 @@ import torch
 from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide
 import os
-from trainers.loss_functions import a2c_loss
 import numpy as np
 from utils.mean_calc import ScalarMeanTracker
-from utils.model_search import search_newest_model
+from utils.init_func import search_newest_model
 from utils.env_wrapper import SingleEnv
 #TODO 输出loss
 def main():
@@ -21,7 +20,7 @@ def main():
     #args.exp_name = '123'
     args.obs_dict.update(dict(image='images.hdf5'))
     #print(args.obs_dict)
-    args.agent = 'A3CAgent'
+    args.agent = 'A3CAgent'#TODO
     args.threads = 1
     args.gpu_ids = -1
     gpu_id = -1

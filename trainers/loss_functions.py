@@ -2,15 +2,13 @@ import torch
 from utils.net_utils import gpuify
 import torch.nn.functional as F
 import numpy as np
-def a3c_loss(
+def basic_loss_no_mask(
     v_batch,
     pi_batch,
     last_v,
     exps,
     gpu_id = -1,
     gamma = 0.99,#discount factor for exps['rewards']
-    #tau = 1.00,#parameter for GAE
-    #beta = 1e-2,#entropy regularization term
     ):
     """接受batch经验的不带mask的简单loss计算，没有熵，没有gae"""
     R = last_v
@@ -43,15 +41,13 @@ def a3c_loss(
         value_loss=value_loss
         )
 
-def a2c_loss(
+def basic_loss(
     v_batch,
     pi_batch,
     last_v,
     exps,
     gpu_id = -1,
     gamma = 0.99,#discount factor for exps['rewards']
-    #tau = 1.00,#parameter for GAE
-    #beta = 1e-2,#entropy regularization term
     ):
     """接受batch经验的带mask的简单loss计算，没有熵，没有gae"""
     policy_loss = 0
@@ -95,6 +91,7 @@ def savn_loss(
     tau = 1.00,#parameter for GAE
     beta = 1e-2,#entropy regularization term
     ):
+    """savn使用的loss函数，经验是以list形式计算的，带熵和gae"""
     R = last_v
     v_batch.append(gpuify(torch.tensor(R), gpu_id))
     policy_loss = 0

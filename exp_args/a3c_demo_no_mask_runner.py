@@ -26,7 +26,7 @@ args.update(
     model = 'DemoModel',
     agent = 'A3CRecordAgent',
     runner = 'A3CNoMaskRunner',
-    loss_func = 'a3c_loss',
+    loss_func = 'basic_loss_no_mask',
     trainer = 'a3c_train',
     optim_args = dict(lr = args.lr,),
     print_freq = 1000,

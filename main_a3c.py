@@ -16,22 +16,11 @@ import torch
 from tqdm import tqdm
 from utils.mean_calc import ScalarMeanTracker
 from utils.thordata_utils import get_scene_names, random_divide
-
+from utils.init_func import get_args, make_exp_dir
+from utils.net_utils import save_model
 def main():
-    #读取参数
-    from exp_args.a3c_lite_args import args
-    #生成日志文件
-    #生成实验文件夹
-    start_time = time.time()
-    time_str = time.strftime(
-        "%y%m%d_%H%M%S", time.localtime(start_time)
-    )
-    args.exp_dir = os.path.join(args.exps_dir, args.exp_name + '_' + time_str)
-    if not os.path.exists(args.exp_dir):
-        os.makedirs(args.exp_dir)
-    #保存本次实验的参数
-    args.save_args(os.path.join(args.exp_dir, 'args.json'))
-
+    #从命令行读取参数
+    args = get_args(os.path.basename(__file__))
     #确认gpu可用情况
     if args.gpu_ids == -1:
         args.gpu_ids = [-1]
@@ -40,7 +29,7 @@ def main():
         assert torch.cuda.is_available()
         mp.set_start_method("spawn")
 
-    #动态载入构造函数
+    #载入构造函数
     creator = {
         'model':getattr(models, args.model),
         'agent':getattr(agents, args.agent),
@@ -61,18 +50,19 @@ def main():
             )
             optimizer.share_memory()
         print(shared_model)
-    # 读取存档点，读取最新存档模型的参数到shared_model。其余线程会自动使用sync函数来同步
+    # TODO 如果有，读取最新存档模型的参数到shared_model。其余线程会自动使用sync函数来同步
     if args.load_model_dir is not '':
         print("load %s"%args.load_model_dir)
         shared_model.load_state_dict(torch.load(args.load_model_dir))
    
-
     #这里用于分配各个线程的环境可以加载的场景以及目标
-    #暂时就每个线程都加载的物体
+    #这样的操作下每个线程被分配到的场景是不相交的，可以避免读写冲突吧大概
     chosen_scene_names = get_scene_names(args.train_scenes)
     scene_names_div, _ = random_divide(1000, chosen_scene_names, args.threads)
     chosen_objects = args.train_targets
 
+    #生成实验文件夹
+    make_exp_dir(args)
     #初始化TX
     log_writer = SummaryWriter(log_dir = args.exp_dir)
 
@@ -137,18 +127,7 @@ def main():
 
             if n_frames >= save_gate_frames:
                 save_gate_frames += save_freq
-                if not os.path.exists(args.exp_dir):
-                    os.makedirs(args.exp_dir)
-                state_to_save = shared_model.state_dict()
-                start_time = time.time()
-                time_str = time.strftime(
-                    "%H%M%S", time.localtime(start_time)
-                )
-                save_path = os.path.join(
-                    args.exp_dir,
-                    f'{args.model}_{n_frames}_{time_str}.dat'
-                )
-                torch.save(state_to_save, save_path)
+                save_model(shared_model, args.exp_dir, f'{args.model}_{n_frames}')
 
     finally:
         log_writer.close()

@@ -49,7 +49,7 @@ args.update(
     model = 'GcnBaseModel',
     agent = 'SavnAgent',
     runner = 'A3CNoMaskRunner',
-    loss_func = 'a3c_loss',
+    loss_func = 'basic_loss_no_mask',
     trainer = 'a3c_train',
     optim_args = dict(lr = 0.0001, alpha = 0.99, eps = 0.1),
     print_freq = 1000,
