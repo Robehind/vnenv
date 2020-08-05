@@ -7,20 +7,20 @@ args.update(
     #     },#{'bathroom':[31],},
     # train_targets = {'kitchen':["Microwave"],},
     test_scenes = {
-        #'kitchen':'21-30',
-        'living_room':'21-30',
+        'kitchen':'21-30',
+        #'living_room':'21-30',
         #'bedroom':'21-30',
         #'bathroom':'21-30',
     },
     test_targets = {
-        # 'kitchen':[
-        #     "Toaster", "Microwave", "Fridge",
-        #     "CoffeeMaker", "GarbageCan", "Box", "Bowl",
-        #     ],
-        'living_room':[
-            "Pillow", "Laptop", "Television",
-            "GarbageCan", "Box", "Bowl",
+        'kitchen':[
+            "Toaster", "Microwave", "Fridge",
+            "CoffeeMaker", "GarbageCan", "Box", "Bowl",
             ],
+        # 'living_room':[
+        #     "Pillow", "Laptop", "Television",
+        #     "GarbageCan", "Box", "Bowl",
+        #     ],
         #'bedroom':["HousePlant", "Lamp", "Book", "AlarmClock"],
         #'bathroom':["Sink", "ToiletPaper", "SoapBottle", "LightSwitch"],
     },

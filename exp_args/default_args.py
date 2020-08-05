@@ -26,7 +26,7 @@ args_dict = dict(
     #直接写类名或函数名
     trainer = 'a2c_train',
     tester = 'a2c_eval',
-    loss_func = 'basic_loss',#没用啊....
+    loss_func = 'basic_loss',
     model = 'LiteModel',#需要的参数见下
     agent = 'BasicAgent',
     runner = 'A2CRunner',#用于指导环境和智能体交互产生数据的类

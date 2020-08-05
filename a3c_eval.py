@@ -37,9 +37,8 @@ def main():
 
     model = creator['model'](**args.model_args)
     if model is not None:  print(model)
-    load_dir = load_or_find_model(args)
-    if load_dir is not '':
-        model.load_state_dict(torch.load(load_dir))
+    #进行一次模型寻找，输出一些调试信息
+    load_or_find_model(args)
         
     #这里用于分配各个线程的环境可以加载的场景以及目标
     scene_names_div, chosen_objects, nums_div, test_set_div = get_test_set(args)

@@ -66,7 +66,7 @@ def main():
     #初始化TX
     log_writer = SummaryWriter(log_dir = args.exp_dir)
 
-     #生成各个线程
+    #生成各个线程
     processes = []
     end_flag = mp.Value(ctypes.c_bool, False)
     result_queue = mp.Queue()
@@ -104,7 +104,6 @@ def main():
 
     n_epis = 0
     n_frames = 0
-
 
     pbar = tqdm(total=args.total_train_frames)
 

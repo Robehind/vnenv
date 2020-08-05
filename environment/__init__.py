@@ -1,2 +1,1 @@
 from .discrete_env import DiscreteEnvironment
-from .offline_controller import OfflineController

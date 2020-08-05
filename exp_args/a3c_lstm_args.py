@@ -7,9 +7,11 @@ args.update(
     test_targets = {'kitchen':["Microwave"],},
     action_dict = {
         'MoveAhead':['m0'],
-        'TurnLeft':['r-90'],
-        'TurnRight':['r90'],
-        #'BackOff':['m180']
+        'TurnLeft':['r-45'],
+        'TurnRight':['r45'],
+        'LookUp':['p-30'],
+        'LookDown':['p30'],
+        'Done':None,
     },
     obs_dict = {
         'fc':'resnet50_fc_new.hdf5',
@@ -19,17 +21,18 @@ args.update(
         'glove':'../thordata/word_embedding/word_embedding.hdf5',
     },
     grid_size = 0.25,
-    rotate_angle = 90,
+    rotate_angle = 45,
     total_train_frames = 40000,
-    total_eval_epi = 1000,
+    total_eval_epi = 100,
     threads = 4,
     exp_name = 'a3cLstmModel',
     optimizer = 'Adam',
     model = 'LstmModel',
-    agent = 'SavnAgent',
+    agent = 'A3CLstmAgent',
     runner = 'A3CRunner',
-    loss_func = 'basic_loss_no_mask',
+    loss_func = 'basic_loss',
     trainer = 'a3c_train',
+    tester = 'a3c_test',
     optim_args = dict(lr = 0.0001),#, alpha = 0.99, eps = 0.1),
     print_freq = 1000,
     max_epi_length = 100,
@@ -38,7 +41,6 @@ args.update(
     verbose = False,
     gpu_ids = -1,
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
-    results_json = "result_lstm.json"
 )
 model_args_dict = {'action_sz' : len(args.action_dict)}
 args.update(

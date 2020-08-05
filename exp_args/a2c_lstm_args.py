@@ -7,9 +7,11 @@ args.update(
     test_targets = {'kitchen':["Microwave"],},
     action_dict = {
         'MoveAhead':['m0'],
-        'TurnLeft':['r-90'],
-        'TurnRight':['r90'],
-        #'BackOff':['m180']
+        'TurnLeft':['r-45'],
+        'TurnRight':['r45'],
+        'LookUp':['p-30'],
+        'LookDown':['p30'],
+        'Done':None,
     },
     obs_dict = {
         'fc':'resnet50_fc_new.hdf5',
@@ -19,9 +21,9 @@ args.update(
         'glove':'../thordata/word_embedding/word_embedding.hdf5',
     },
     grid_size = 0.25,
-    rotate_angle = 90,
+    rotate_angle = 45,
     total_train_frames = 100000,
-    total_eval_epi = 1000,
+    total_eval_epi = 100,
     threads = 4,
     exp_name = 'LstmModel',
     optimizer = 'RMSprop',
@@ -38,7 +40,6 @@ args.update(
     verbose = False,
     gpu_ids = [0],
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
-    results_json = "result_a2c_lstm.json"
 )
 model_args_dict = {'action_sz' : len(args.action_dict)}
 args.update(

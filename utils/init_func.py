@@ -48,7 +48,7 @@ def get_args(basename):
     return args
 
 def make_exp_dir(args, flag = ''):
-    """生成实验文件夹，并且会复制一次参数。flag为可选可以新增的字符标识"""
+    """生成实验文件夹，会修改args.exp_dir, 并且会复制一次参数。flag为可选可以新增的字符标识"""
     start_time = time.time()
     time_str = time.strftime(
         "%y%m%d_%H%M%S", time.localtime(start_time)

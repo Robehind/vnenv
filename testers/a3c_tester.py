@@ -27,7 +27,7 @@ def a3c_test(
     #initialize env and agent
 
     model = creator['model'](**args.model_args)
-    if load_model_dir is not None:
+    if load_model_dir is not '':
         model.load_state_dict(torch.load(load_model_dir))
 
     agent = creator['agent'](
