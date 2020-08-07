@@ -3,16 +3,16 @@ from .default_args import args
 args.update(
     
     test_scenes = {
-        #'kitchen':'21-30',
-        'living_room':'21-30',
+        'kitchen':'21-30',
+        #'living_room':'21-30',
         #'bedroom':'21-30',
         #'bathroom':'21-30',
     },
     test_targets = {
-        # 'kitchen':[
-        #     "Toaster", "Microwave", "Fridge",
-        #     "CoffeeMaker", "GarbageCan", "Box", "Bowl",
-        #     ],
+        'kitchen':[
+            "Toaster", "Microwave", "Fridge",
+            "CoffeeMaker", "GarbageCan", "Box", "Bowl",
+            ],
         'living_room':[
             "Pillow", "Laptop", "Television",
             "GarbageCan", "Box", "Bowl",
@@ -40,9 +40,9 @@ args.update(
     grid_size = 0.25,
     rotate_angle = 45,
     total_train_frames = 40000,
-    total_eval_epi = 100,
-    threads = 2,
-    exp_name = 'ori_savn',
+    total_eval_epi = 250,
+    threads = 1,
+    exp_name = 'savn',
     optimizer = 'SharedRMSprop',
     model = 'SAVN',
     agent = 'OriSavnAgent',
@@ -57,7 +57,8 @@ args.update(
     model_save_freq = 40000,
     nsteps = 6,
     verbose = False,
-    gpu_ids = -1,
+    gpu_ids = [0],
+    shuffle = False,
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
     results_json = "result.json"
 )

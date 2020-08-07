@@ -30,6 +30,7 @@ def savn_test(
     model = creator['model'](**args.model_args)
     if load_model_dir is not None:
         model.load_state_dict(torch.load(load_model_dir))
+    model.eval()
 
     agent = creator['agent'](
         list(args.action_dict.keys()),
@@ -77,17 +78,20 @@ def savn_test(
         agent.clear_mems()
         last_obs = env.reset(**test_sche[t_epis])
         # Accumulate loss over all meta_train episodes.
+        if args.verbose:
+            print("#########################")
+            print(f'in {env.env.scene_name} towards {env.env.target_str}')
         done = False
         thread_reward = 0
         thread_steps = 0
         while True:
             # Run episode for k steps or until it is done or has made a mistake (if dynamic adapt is true).
             agent.learned_input = None
-            if args.verbose:
-                print("New inner step")
             
             for _ in range(args.nsteps):
                 action, _ = agent.action(last_obs, params)
+                if args.verbose:
+                    print(action)
                 obs_new, r, done, info = env.step(action)
             
                 thread_reward += r
@@ -106,6 +110,8 @@ def savn_test(
                         'total_reward:':thread_reward,
                         'epis':1
                     }
+                    if args.verbose:
+                        print(thread_steps,info['best_len'],spl)
                     target_str = get_type(info['scene_name'])+'/'+info['target']
                     res = {
                         info['scene_name']:data,

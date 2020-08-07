@@ -63,7 +63,7 @@ def random_divide(total_epi, chosen_scenes, n, shuffle = True):
     epi_nums[0] += total_epi-sum(epi_nums)
     return out, epi_nums
 
-def get_test_set(args, shuffle = True):
+def get_test_set(args):
     """
     返回scene_names_div,每个线程需要测试的房间名
     chosen_objects,不同类别场景需要测试的目标，这个变量对每个线程都一样的
@@ -71,6 +71,7 @@ def get_test_set(args, shuffle = True):
     test_set_div,当导入了测试序列文件时，为每个线程的测试序列
     """
     sche = {}
+    shuffle = args.shuffle
     chosen_scene_names = get_scene_names(args.test_scenes)
     chosen_objects = args.test_targets
     test_set_div = None

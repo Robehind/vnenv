@@ -9,7 +9,7 @@ class SAVN(BaseModel):
         action_sz,
         nsteps,
         target_sz = 300,
-        dropout_rate = 0.5,
+        dropout_rate = 0.25,
         ):
         super(SAVN, self).__init__(
             action_sz, 

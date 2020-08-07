@@ -8,7 +8,7 @@ class BaseModel(torch.nn.Module):
     的隐藏状态不同"""
     def __init__(
         self,
-        action_sz,
+        action_sz = 6,
         target_sz = 300,
         dropout_rate = 0.25,
         ):

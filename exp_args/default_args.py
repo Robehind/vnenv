@@ -20,6 +20,7 @@ args_dict = dict(
     threads = 4,#线程数
     offline_data_dir = '../thordata/mixed_offline_data',#数据集的位置，该路径下应该是那些FloorPlan开头的文件夹才对
     lr = 0.0002,#learning rate
+    shuffle = True,#在为线程随机分配训练集时是否打乱顺序
 
     #componets args 
     #决定要调用的环境、智能体等等，需要新增时，写到对应的模组下，并在__init__中 import

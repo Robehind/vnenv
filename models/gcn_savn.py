@@ -9,7 +9,7 @@ class GCNSAVN(GcnBaseModel):
         action_sz,
         nsteps,
         target_sz = 300,
-        dropout_rate = 0.5,
+        dropout_rate = 0.25,
         ):
         super(GCNSAVN, self).__init__(
             action_sz, 

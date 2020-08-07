@@ -47,7 +47,7 @@ def main():
 
     #这里用于分配各个线程的环境可以加载的场景以及目标
     chosen_scene_names = get_scene_names(args.train_scenes)
-    scene_names_div, _ = random_divide(1000, chosen_scene_names, args.threads)
+    scene_names_div, _ = random_divide(1000, chosen_scene_names, args.threads, args.shuffle)
     chosen_objects = args.train_targets
 
     #初始化各个对象
