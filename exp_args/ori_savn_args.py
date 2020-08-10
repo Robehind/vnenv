@@ -43,7 +43,7 @@ args.update(
     total_eval_epi = 250,
     threads = 1,
     exp_name = 'savn',
-    optimizer = 'SharedRMSprop',
+    optimizer = 'SharedAdam',
     model = 'SAVN',
     agent = 'OriSavnAgent',
     runner = 'SavnRunner',

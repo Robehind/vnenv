@@ -11,15 +11,15 @@ from utils.thordata_utils import get_scene_names, random_divide
 import os
 import numpy as np
 from utils.mean_calc import ScalarMeanTracker
-from utils.init_func import search_newest_model
+from utils.init_func import search_newest_model, get_args, load_or_find_model
 from utils.env_wrapper import SingleEnv
 #TODO 输出loss
 def main():
     #读取参数
-    from exp_args.a2c_demo_args import args
-    #args.exp_name = '123'
+    args = get_args(os.path.basename(__file__))
+    #强制添加图像数据
     args.obs_dict.update(dict(image='images.hdf5'))
-    #print(args.obs_dict)
+
     args.agent = 'A3CAgent'#TODO
     args.threads = 1
     args.gpu_ids = -1
@@ -34,17 +34,10 @@ def main():
     model = creator['model'](**args.model_args)
     if model is not None:
         print(model)
-    # 读取存档点，读取最新存档模型的参数到shared_model。其余线程会自动使用sync函数来同步
-    if args.load_model_dir is not '':
-        print("load %s"%args.load_model_dir)
-        model.load_state_dict(torch.load(args.load_model_dir))
-    else:
-        find_path = search_newest_model(args.exps_dir, args.exp_name)
-        if find_path is not None:
-            print("Searched the neweset model: %s"%find_path)
-            model.load_state_dict(torch.load(find_path))
-        else:
-            print("Can't find a neweset model. Load Nothing.")
+    # 寻找最新模型
+    load_model_dir = load_or_find_model(args)
+    if load_model_dir is not '':
+        model.load_state_dict(torch.load(load_model_dir))
 
     #这里用于分配各个线程的环境可以加载的场景以及目标
     chosen_scene_names = get_scene_names(args.test_scenes)
@@ -91,7 +84,7 @@ def main():
         obs_new, r, done, info = env.step(action)
         obs = obs_new
         ep_r += r
-        if not info['agent_done']: eplen += 1
+        eplen += 1
         if done:
             print({
                 'eplen':eplen,

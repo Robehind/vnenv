@@ -1,48 +1,41 @@
 from .default_args import args
 
 args.update(
-    #train_scenes = {'kitchen':'25',},#{'bathroom':[31],},
-    train_scenes = {
-        'kitchen':'25'
-        },#{'bathroom':[31],},
+    train_scenes = {'kitchen':'25'},
     train_targets = {'kitchen':["Microwave", 'Sink'],},
-    test_scenes = {'kitchen':'25',},#{'bathroom':[31],},
+    test_scenes = {'kitchen':'25',},
     test_targets = {'kitchen':["Microwave", 'Sink'],},
     action_dict = {
         'MoveAhead':['m0'],
         'TurnLeft':['r-45'],
         'TurnRight':['r45'],
-        #'BackOff':['m180']
-        #'Done':None,
+        'Done':None,
     },
     obs_dict = {
         'fc':'resnet50_fc_new.hdf5',
-        #'score':'resnet50_score.hdf5'
     },
     target_dict = {
         'glove':'../thordata/word_embedding/word_embedding.hdf5',
     },
     grid_size = 0.25,
     rotate_angle = 45,
-    total_train_frames = 80000,
+    total_train_frames = 200000,
     total_eval_epi = 1000,
     threads = 4,
     exp_name = 'A3CLiteDemo',
-    optimizer = 'Adam',
+    optimizer = 'SharedAdam',
     model = 'LiteModel',
     agent = 'A3CAgent',
     runner = 'A3CRunner',
     loss_func = 'basic_loss',
     trainer = 'a3c_train',
     tester = 'a3c_test',
-    optim_args = dict(lr = args.lr,),
+    optim_args = dict(lr = 0.0001,),
     print_freq = 1000,
     max_epi_length = 100,
-    model_save_freq = 80000,
-    nsteps = 20,
-    verbose = False,
+    model_save_freq = 200000,
+    nsteps = 10,
     gpu_ids = -1,
-    results_json = "result.json"
 )
 model_args_dict = dict(
         action_sz = len(args.action_dict),

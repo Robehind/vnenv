@@ -51,7 +51,7 @@ args.update(
     model = 'SAVN',
     agent = 'SavnAgent',
     runner = 'SavnRunner',
-    loss_func = 'basic_loss_no_mask',
+    loss_func = 'savn_loss',
     trainer = 'savn_train',
     tester = 'savn_test',
     optim_args = dict(lr = 0.0001, alpha = 0.99, eps = 0.1),

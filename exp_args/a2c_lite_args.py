@@ -1,9 +1,7 @@
 from .default_args import args
 
 args.update(
-    train_scenes = {
-        'kitchen':'25'
-        },#{'bathroom':[31],},
+    train_scenes = {'kitchen':'25'},
     train_targets = {'kitchen':["Microwave", 'Sink'],},
     test_scenes = {'kitchen':'25',},
     test_targets = {'kitchen':["Microwave", 'Sink'],},
@@ -11,8 +9,7 @@ args.update(
         'MoveAhead':['m0'],
         'TurnLeft':['r-45'],
         'TurnRight':['r45'],
-        #'BackOff':['m180']
-        #'Done':None,
+        'Done':None,
     },
     obs_dict = {
         'fc':'resnet50_fc_new.hdf5',
@@ -22,7 +19,7 @@ args.update(
     },
     grid_size = 0.25,
     rotate_angle = 45,
-    total_train_frames = 40000,
+    total_train_frames = 150000,
     total_eval_epi = 1000,
     threads = 4,
     exp_name = 'A2CLiteDemo',
@@ -32,14 +29,12 @@ args.update(
     runner = 'A2CRunner',
     loss_func = 'basic_loss',
     trainer = 'a2c_train',
-    optim_args = dict(lr = args.lr,),
+    optim_args = dict(lr = 0.0001,),
     print_freq = 1000,
     max_epi_length = 100,
-    model_save_freq = 40000,
+    model_save_freq = 150000,
     nsteps = 10,
-    verbose = False,
     gpu_ids = [0],
-    results_json = "result.json"
 )
 model_args_dict = dict(
         action_sz = len(args.action_dict),
