@@ -13,7 +13,7 @@ args.update(
         'TurnRight':['r45'],
         'LookUp':['p-30'],
         'LookDown':['p30'],
-        #'Done':None,#Done动作一定必须绑定为None
+        'Done':None,#Done动作一定必须绑定为None
         #包含Done字符串时，需要智能体自主提出结束episode，不包含时环境会自动判定是否结束
     },
     obs_dict = {
@@ -36,6 +36,7 @@ args.update(
     print_freq = 1000,
     max_epi_length = 200,
     model_save_freq = 40000,
+    shuffle = False,
     nsteps = 10,
     verbose = False,
     gpu_ids = -1,

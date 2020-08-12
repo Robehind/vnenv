@@ -95,13 +95,13 @@ def savn_test(
                 obs_new, r, done, info = env.step(action)
             
                 thread_reward += r
-                #thread_steps += not info['agent_done']
-                thread_steps += 1
+                thread_steps += not info['agent_done']
+                #thread_steps += 1
 
                 if done:
                     spl = 0
                     if info['success']:
-                        assert info['best_len'] <= thread_steps
+                        assert info['best_len'] <= thread_steps,f"{info['best_len']}!={thread_steps}"
                         spl = info['best_len']/thread_steps
                     data = {
                         'ep_length:':thread_steps,

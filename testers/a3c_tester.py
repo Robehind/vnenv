@@ -82,7 +82,7 @@ def a3c_test(
                 obs_new, r, done, info = env.step(action)
             
                 thread_reward += r
-                thread_steps += 1
+                thread_steps += not info['agent_done']
 
                 if done:
                     spl = 0

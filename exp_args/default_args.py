@@ -26,7 +26,7 @@ args_dict = dict(
     #决定要调用的环境、智能体等等，需要新增时，写到对应的模组下，并在__init__中 import
     #直接写类名或函数名
     trainer = 'a2c_train',
-    tester = 'a2c_eval',
+    tester = 'a3c_test',
     loss_func = 'basic_loss',
     model = 'LiteModel',#需要的参数见下
     agent = 'BasicAgent',

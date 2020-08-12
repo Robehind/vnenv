@@ -43,6 +43,7 @@ def main():
 
     #这里用于分配各个线程的环境可以加载的场景以及目标
     scene_names_div, chosen_objects, nums_div, test_set_div = get_test_set(args)
+    #print(scene_names_div)
 
     #生成多线程环境，每个线程可以安排不同的房间或者目标
     agent = creator['agent'](
@@ -94,8 +95,8 @@ def main():
                 stop = False
                 t_info = info[i]
                 thread_reward[i] += r[i]
-                #thread_steps[i] += not t_info['agent_done']
-                thread_steps[i] += 1
+                thread_steps[i] += not t_info['agent_done']
+                #thread_steps[i] += 1
                 if done[i]:
                     n_epis_thread[i] += 1
                     pbar.update(1)

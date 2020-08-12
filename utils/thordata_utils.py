@@ -61,6 +61,7 @@ def random_divide(total_epi, chosen_scenes, n, shuffle = True):
     num_per_epi = total_epi/len(scenes)
     epi_nums = [round(len(x)*num_per_epi) for x in out]
     epi_nums[0] += total_epi-sum(epi_nums)
+    if not shuffle: epi_nums = [total_epi//n for _ in range(n)]
     return out, epi_nums
 
 def get_test_set(args):

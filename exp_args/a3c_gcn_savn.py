@@ -5,22 +5,22 @@ args.update(
     #train_targets = {'kitchen':["Microwave"],},
     #test_scenes = {'kitchen':'25',},#{'bathroom':[31],},
     test_scenes = {
-        #'kitchen':'21-30',
-        'living_room':'21-22,24-30',
+        'kitchen':'21-30',
+        #'living_room':'21-22,24-30',
         #'bedroom':'21-30',
         #'bathroom':'21-30',
     },
     test_targets = {
-        # 'kitchen':[
-        #     "Toaster", "Microwave", "Fridge",
-        #     "CoffeeMaker", "GarbageCan", "Box", "Bowl",
-        #     ],
+        'kitchen':[
+            "Toaster", "Microwave", "Fridge",
+            "CoffeeMaker", "GarbageCan", "Box", "Bowl",
+            ],
         'living_room':[
             "Pillow", "Laptop", "Television",
             "GarbageCan", "Box", "Bowl",
             ],
-        #'bedroom':["HousePlant", "Lamp", "Book", "AlarmClock"],
-        #'bathroom':["Sink", "ToiletPaper", "SoapBottle", "LightSwitch"],
+        'bedroom':["HousePlant", "Lamp", "Book", "AlarmClock"],
+        'bathroom':["Sink", "ToiletPaper", "SoapBottle", "LightSwitch"],
     },
     action_dict = {
         'MoveAhead':['m0'],
@@ -28,7 +28,7 @@ args.update(
         'TurnRight':['r45'],
         'LookUp':['p-30'],
         'LookDown':['p30'],
-        'Done':None,
+        #'Done':None,
         #包含Done字符串时，需要智能体自主提出结束episode，不包含时环境会自动判定是否结束
     },
     obs_dict = {
@@ -43,7 +43,7 @@ args.update(
     total_train_frames = 1e8,
     total_eval_epi = 250,
     threads = 1,
-    exp_name = 'OriSavnTrainGcn',
+    exp_name = 'a3cgcnsavn',
     optimizer = 'SharedRMSprop',
     model = 'GCNSAVN',
     agent = 'OriSavnAgent',
@@ -59,6 +59,7 @@ args.update(
     nsteps = 6,
     verbose = False,
     gpu_ids = [0],
+    shuffle = False,
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
     results_json = "result.json"
 )

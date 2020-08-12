@@ -448,7 +448,7 @@ class DiscreteEnvironment:
                 print(self.scene_name)
                 path = nx.shortest_path(graph, str(start_state), k)
             #path_len = len(path) - 1
-            path_len = len(path)
+            path_len = len(path) - 1
             if path_len < best_path_len:
                 best_path = path
                 best_path_len = path_len
