@@ -79,6 +79,7 @@ def main():
     n_epis_thread = [0 for _ in range(args.threads)]
     thread_steps = [0 for _ in range(args.threads)]
     thread_reward = [0 for _ in range(args.threads)]
+    false_action_ratio = [[] for _ in range(args.threads)]
 
     test_scalars = LabelScalarTracker()
 
@@ -95,6 +96,7 @@ def main():
                 stop = False
                 t_info = info[i]
                 thread_reward[i] += r[i]
+                false_action_ratio[i].append(t_info['false_action'] / (thread_steps[i]+1))
                 thread_steps[i] += not t_info['agent_done']
                 #thread_steps[i] += 1
                 if done[i]:
@@ -109,13 +111,15 @@ def main():
                         'SR:':t_info['success'],
                         'SPL:':spl,
                         'total_reward:':thread_reward[i],
-                        'epis':1
+                        'epis':1,
+                        'false_action_ratio':false_action_ratio[i]
                     }
                     target_str = get_type(t_info['scene_name'])+'/'+t_info['target']
                     for k in [t_info['scene_name'], target_str]:
                         test_scalars[k].add_scalars(data)
                     thread_steps[i] = 0
                     thread_reward[i] = 0
+                    false_action_ratio[i] = []
                     agent.reset_hidden(i)
         
         if stop: break
