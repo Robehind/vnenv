@@ -83,12 +83,11 @@ def a3c_test(
                 obs_new, r, done, info = env.step(action)
             
                 thread_reward += r
+                false_action_ratio.append(info['false_action'] / (thread_steps+1))
                 thread_steps += not info['agent_done']
-                false_action_ratio.append(info['false_action'] / thread_steps)
 
                 if done:
                     spl = 0
-                    false_action_ratio[-1] = info['false_action'] / (thread_steps+1)
                     if info['success']:
                         assert info['best_len'] <= thread_steps
                         spl = info['best_len']/thread_steps

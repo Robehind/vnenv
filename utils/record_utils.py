@@ -27,8 +27,10 @@ def data_output(args, test_scalars):
     for k in scene_split:
         out = dict(Total = total_scalars.pop(k))
         for i in sorted(scene_split[k]):
+            scene_split[k][i].pop('false_action_ratio')
             out[i] = scene_split[k][i]
         for i in sorted(target_split[k]):
+            target_split[k][i].pop('false_action_ratio')
             out[i] = target_split[k][i]
         result_path = os.path.join(args.exp_dir, k+'_'+args.results_json)
         with open(result_path, "w") as fp:
@@ -36,6 +38,7 @@ def data_output(args, test_scalars):
 
     out = dict(Total = total_scalars.pop('Total'))
     for i in sorted(total_scalars):
+        total_scalars[i].pop('false_action_ratio')
         out[i] = total_scalars[i]
     result_path = os.path.join(args.exp_dir, 'Total_'+args.results_json)
     with open(result_path, "w") as fp:
