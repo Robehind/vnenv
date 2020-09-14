@@ -20,7 +20,7 @@ def main():
     #强制添加图像数据
     args.obs_dict.update(dict(image='images.hdf5'))
 
-    args.agent = 'A3CAgent'#TODO
+    #args.agent = 'A3CAgent'#TODO
     args.threads = 1
     args.gpu_ids = -1
     gpu_id = -1
@@ -70,37 +70,39 @@ def main():
 
     obs = env.reset()
     print(f"heading {env.env.target_str}")
+    cv2.namedWindow("Test",0)
+    cv2.resizeWindow("Test", 400, 400)
     while 1:
         
         pic = obs['image'][:]
         #RGB to BGR
         pic = pic[:,:,::-1]
-        cv2.imshow("Env", pic)
+        cv2.imshow("Test", pic)
         p_key = cv2.waitKey(0)
         if p_key == 27:
             break
         action, _ = agent.action(obs)
-        print(action)
+        #print(action)
         obs_new, r, done, info = env.step(action)
         obs = obs_new
         ep_r += r
         eplen += 1
         if done:
             print({
-                'eplen':eplen,
                 'success':info['success'],
+                'reward':ep_r,
+                'steps':eplen,
                 'spl':info['success']*info['best_len']/eplen,
-                'reward':ep_r
             })
             eplen = 0
             ep_r = 0
             pic = obs['image'][:]
             #RGB to BGR
             pic = pic[:,:,::-1]
-            cv2.imshow("Env", pic)
+            cv2.imshow("Test", pic)
             p_key = cv2.waitKey(0)
             obs = env.reset()
-            print(f"Heading {env.env.target_str}")
+            print(f"Target: {env.env.target_str}")
 
 if __name__ == "__main__":
     main()

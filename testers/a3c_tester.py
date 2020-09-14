@@ -73,6 +73,7 @@ def a3c_test(
         done = False
         thread_reward = 0
         thread_steps = 0
+        false_action_ratio = []
         while True:
             if args.verbose:
                 print("New inner step")
@@ -83,9 +84,11 @@ def a3c_test(
             
                 thread_reward += r
                 thread_steps += not info['agent_done']
+                false_action_ratio.append(info['false_action'] / thread_steps)
 
                 if done:
                     spl = 0
+                    false_action_ratio[-1] = info['false_action'] / (thread_steps+1)
                     if info['success']:
                         assert info['best_len'] <= thread_steps
                         spl = info['best_len']/thread_steps
@@ -94,7 +97,8 @@ def a3c_test(
                         'SR:':info['success'],
                         'SPL:':spl,
                         'total_reward:':thread_reward,
-                        'epis':1
+                        'epis':1,
+                        'false_action_ratio':false_action_ratio
                     }
                     target_str = get_type(info['scene_name'])+'/'+info['target']
                     res = {

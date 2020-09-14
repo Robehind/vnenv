@@ -84,6 +84,7 @@ def savn_test(
         done = False
         thread_reward = 0
         thread_steps = 0
+        false_action_ratio = []
         while True:
             # Run episode for k steps or until it is done or has made a mistake (if dynamic adapt is true).
             agent.learned_input = None
@@ -96,10 +97,12 @@ def savn_test(
             
                 thread_reward += r
                 thread_steps += not info['agent_done']
+                false_action_ratio.append(info['false_action'] / thread_steps)
                 #thread_steps += 1
 
                 if done:
                     spl = 0
+                    false_action_ratio[-1] = info['false_action'] / (thread_steps+1)
                     if info['success']:
                         assert info['best_len'] <= thread_steps,f"{info['best_len']}!={thread_steps}"
                         spl = info['best_len']/thread_steps
@@ -108,7 +111,8 @@ def savn_test(
                         'SR:':info['success'],
                         'SPL:':spl,
                         'total_reward:':thread_reward,
-                        'epis':1
+                        'epis':1,
+                        'false_action_ratio':false_action_ratio
                     }
                     if args.verbose:
                         print(thread_steps,info['best_len'],spl)

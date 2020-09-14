@@ -238,6 +238,7 @@ class DiscreteEnvironment:
             scene_name = self.scene_name, 
             target = self.target_str,
             agent_done = False,
+            false_action = 0,
             #best_len = self.best_path_len()[1],
             )
         if calc_best_len: self.info.update(dict(best_len = self.best_path_len()[1]))
@@ -358,6 +359,8 @@ class DiscreteEnvironment:
         #分析events，给reward
         event, self.done = self.judge(action)
         self.reward = self.reward_dict[event]
+        if event == 'collision':
+            self.info['false_action'] += 1
         #可以配置更多的额外环境信息在info里
 
         return self.get_obs(), self.reward, self.done, self.info
@@ -447,8 +450,8 @@ class DiscreteEnvironment:
             except nx.NodeNotFound:
                 print(self.scene_name)
                 path = nx.shortest_path(graph, str(start_state), k)
-            #path_len = len(path) - 1
             path_len = len(path) - 1
+            #path_len = len(path)
             if path_len < best_path_len:
                 best_path = path
                 best_path_len = path_len
