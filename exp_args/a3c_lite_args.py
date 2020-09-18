@@ -35,7 +35,7 @@ args.update(
     max_epi_length = 100,
     model_save_freq = 200000,
     nsteps = 10,
-    gpu_ids = -1,
+    gpu_ids = [0],
 )
 model_args_dict = dict(
         action_sz = len(args.action_dict),

@@ -8,8 +8,8 @@ args.update(
     test_scenes = {
         'kitchen':'21-30',
         'living_room':'21-30',
-        #'bedroom':'22,24,26,28,30',
-        #'bathroom':'22,24,26,28,30',
+        'bedroom':'21-30',
+        'bathroom':'21-30',
     },
     test_targets = {
         'kitchen':[
@@ -20,9 +20,10 @@ args.update(
             "Pillow", "Laptop", "Television",
             "GarbageCan", "Box", "Bowl",
             ],
-        #'bedroom':["HousePlant", "Lamp", "Book", "AlarmClock"],
-        #'bathroom':["Sink", "ToiletPaper", "SoapBottle", "LightSwitch"],
+        'bedroom':["HousePlant", "Lamp", "Book", "AlarmClock"],
+        'bathroom':["Sink", "ToiletPaper", "SoapBottle", "LightSwitch"],
     },
+    shuffle = False,
     test_sche_dir = '../thordata/test_schedule',
     action_dict = {
         'MoveAhead':['m0'],
@@ -47,7 +48,7 @@ args.update(
     rotate_angle = 45,
     total_train_frames = 100000,
     total_eval_epi = 100,
-    threads = 2,
+    threads = 4,
     exp_name = 'savnBaseModel',
     optimizer = 'RMSprop',
     model = 'BaseModel',
@@ -57,13 +58,13 @@ args.update(
     trainer = 'a3c_train',
     optim_args = dict(lr = 0.0001, alpha = 0.99, eps = 0.1),
     print_freq = 1000,
-    max_epi_length = 200,
+    max_epi_length = 100,
     model_save_freq = 25000,
     nsteps = 40,
     verbose = False,
     gpu_ids = [0],
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
-    results_json = "result_savnbase.json"
+    results_json = "result.json"
 )
 model_args_dict = {'action_sz' : len(args.action_dict)}
 args.update(

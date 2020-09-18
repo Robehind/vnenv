@@ -4,11 +4,13 @@ args.update(
     #train_scenes = {'kitchen':'25',},#{'bathroom':[31],},
     #train_targets = {'kitchen':["Microwave"],},
     #test_scenes = {'kitchen':'25',},#{'bathroom':[31],},
+    test_sche_dir = '../thordata/test_schedule',
+    shuffle = False,
     test_scenes = {
         'kitchen':'21-30',
-        #'living_room':'21-22,24-30',
-        #'bedroom':'21-30',
-        #'bathroom':'21-30',
+        'living_room':'21-22,24-30',
+        'bedroom':'21-30',
+        'bathroom':'21-30',
     },
     test_targets = {
         'kitchen':[
@@ -28,7 +30,7 @@ args.update(
         'TurnRight':['r45'],
         'LookUp':['p-30'],
         'LookDown':['p30'],
-        #'Done':None,
+        'Done':None,
         #包含Done字符串时，需要智能体自主提出结束episode，不包含时环境会自动判定是否结束
     },
     obs_dict = {
@@ -41,9 +43,9 @@ args.update(
     grid_size = 0.25,
     rotate_angle = 45,
     total_train_frames = 1e8,
-    total_eval_epi = 250,
-    threads = 1,
-    exp_name = 'a3cgcnsavn',
+    total_eval_epi = 1000,
+    threads = 4,
+    exp_name = 'gcnsavn',
     optimizer = 'SharedRMSprop',
     model = 'GCNSAVN',
     agent = 'OriSavnAgent',
@@ -54,12 +56,11 @@ args.update(
     optim_args = dict(lr = 0.0001),
     inner_lr = 0.0001,
     print_freq = 100000,
-    max_epi_length = 200,
+    max_epi_length = 100,
     model_save_freq = 1e7,
     nsteps = 6,
     verbose = False,
     gpu_ids = [0],
-    shuffle = False,
     #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
     results_json = "result.json"
 )

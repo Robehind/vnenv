@@ -1,15 +1,34 @@
 from .default_args import args
 
 args.update(
-    train_scenes = {'kitchen':'1-8',},
-    train_targets = {'kitchen':["Toaster", "Microwave", "Fridge", "CoffeeMachine", "GarbageCan", "Bowl"],},
-    test_scenes = {'kitchen':'9-15',},
-    test_targets = {'kitchen':["Mug","Pot","Cup"]},
+    seed = 1,
+    test_scenes = {
+        'kitchen':'21-30',
+        'living_room':'21-30',
+        'bedroom':'21-30',
+        'bathroom':'21-30',
+    },
+    test_targets = {
+        'kitchen':[
+            "Toaster", "Microwave", "Fridge",
+            "CoffeeMaker", "GarbageCan", "Box", "Bowl",
+            ],
+        'living_room':[
+            "Pillow", "Laptop", "Television",
+            "GarbageCan", "Box", "Bowl",
+            ],
+        'bedroom':["HousePlant", "Lamp", "Book", "AlarmClock"],
+        'bathroom':["Sink", "ToiletPaper", "SoapBottle", "LightSwitch"],
+    },
+    
+    test_sche_dir = '../thordata/test_schedule',
+    shuffle = False,
     action_dict = {
         'MoveAhead':['m0'],
-        'TurnLeft':['r-90'],
-        'TurnRight':['r90'],
-        #'BackOff':['m180']
+        'TurnLeft':['r-45'],
+        'TurnRight':['r45'],
+        'LookUp':['p-30'],
+        'LookDown':['p30'],
         'Done':None,
     },
     obs_dict = {
@@ -17,10 +36,10 @@ args.update(
         'score':'resnet50_score.hdf5'
         },
     grid_size = 0.25,
-    rotate_angle = 90,
+    rotate_angle = 45,
     total_train_frames = 20000,
     total_eval_epi = 1000,
-    threads = 2,
+    threads = 4,
     exp_name = 'A2CGCN',
     optimizer = 'RMSprop',
     model = 'ScenePriorsModel',
@@ -36,7 +55,7 @@ args.update(
     verbose = False,
     gpu_ids = [0],
     #load_model_dir = "../check_points/A2CGCN_4000000_2020-05-21_17-44-59.dat",
-    results_json = "done_gcn_unseenk_uo.json"
+    results_json = "result.json"
 )
 model_args_dict = dict(
         action_sz = len(args.action_dict),

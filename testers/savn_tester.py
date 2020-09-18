@@ -28,15 +28,19 @@ def savn_test(
     #initialize env and agent
 
     model = creator['model'](**args.model_args)
-    if load_model_dir is not None:
+    if load_model_dir is not '':
         model.load_state_dict(torch.load(load_model_dir))
     model.eval()
 
+    puppet_model = creator['model'](**args.model_args)
     agent = creator['agent'](
         list(args.action_dict.keys()),
-        model,
+        puppet_model,
         gpu_id
     )
+    #TODO
+    if get_type(chosen_scene_names[0]) == 'living_room':
+        args.max_epi_length == 200
     env = creator['env'](
         offline_data_dir = args.offline_data_dir,
         action_dict = args.action_dict,
@@ -97,9 +101,9 @@ def savn_test(
             
                 thread_reward += r
                 false_action_ratio.append(info['false_action'] / (thread_steps+1))
-                thread_steps += not info['agent_done']
+                #thread_steps += not info['agent_done']
                 
-                #thread_steps += 1
+                thread_steps += 1
 
                 if done:
                     spl = 0
@@ -127,7 +131,7 @@ def savn_test(
             
             if done:
                 break
-
+            #if False:
             if gradient_limit < 0 or episode_num < gradient_limit:
 
                 num_gradients += 1
@@ -141,8 +145,8 @@ def savn_test(
                 inner_gradient = torch.autograd.grad(
                     learned_loss,
                     [v for _, v in params_list[episode_num].items()],
-                    create_graph=True,
-                    retain_graph=True,
+                    #create_graph=True,
+                    #retain_graph=True,
                     allow_unused=True,
                 )
 

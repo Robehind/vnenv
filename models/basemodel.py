@@ -126,8 +126,8 @@ class BaseModel(torch.nn.Module):
             #     params["lstm.bias_hh"],
             # )
 
-            #Change for pytorch 1.01
-            hx, cx = nn._VF.lstm_cell(
+            #Change for pytorch 1.6.0
+            hx, cx = torch.lstm_cell(
                 embedding,
                 prev_hidden,
                 params["lstm.weight_ih"],

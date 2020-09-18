@@ -143,7 +143,7 @@ class GcnBaseModel(torch.nn.Module):
 
         else:
             
-            hx, cx = nn._VF.lstm_cell(
+            hx, cx = torch.lstm_cell(
                 embedding,
                 prev_hidden,
                 params["lstm.weight_ih"],

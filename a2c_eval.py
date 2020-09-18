@@ -58,6 +58,8 @@ def main():
     #生成多线程环境，每个线程可以安排不同的房间或者目标
     env_fns = []
     for i in range(args.threads):
+        if get_type(scene_names_div[i][0]) == 'living_room':
+            args.max_epi_length == 200
         env_args = dict(
             offline_data_dir = args.offline_data_dir,
             action_dict = args.action_dict,
@@ -97,8 +99,8 @@ def main():
                 t_info = info[i]
                 thread_reward[i] += r[i]
                 false_action_ratio[i].append(t_info['false_action'] / (thread_steps[i]+1))
-                thread_steps[i] += not t_info['agent_done']
-                #thread_steps[i] += 1
+                #thread_steps[i] += not t_info['agent_done']
+                thread_steps[i] += 1
                 if done[i]:
                     n_epis_thread[i] += 1
                     pbar.update(1)
