@@ -111,7 +111,6 @@ args_dict = dict(
     rotate_angle = 45,
     move_angle = 45,
     horizon_angle = 30,
-    chosen_targets = None,#默认值为None时则无限制,这个表是针对env目前能加载的所有scene而言的
     debug = False,
 )
 #模型参数，这一块儿目前写得还不够灵活，你的模型需要什么参数，就都写在这里

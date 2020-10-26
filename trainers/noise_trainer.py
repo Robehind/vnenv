@@ -6,7 +6,7 @@ from utils.mean_calc import ScalarMeanTracker
 from utils.env_wrapper import SingleEnv
 
 
-def ori_savn_train(
+def noise_train(
     args,
     thread_id,
     result_queue,
@@ -57,8 +57,9 @@ def ori_savn_train(
     while not end_flag.value:
     
         # theta <- shared_initialization
-        params_list = [get_params(shared_model, gpu_id)]
-        params = params_list[-1]
+        #params_list = [get_params(shared_model, gpu_id)]
+        #params = params_list[-1]
+        params = get_params(shared_model, gpu_id)
         #loss_dict = {}
         episode_num = 0
         num_gradients = 0
@@ -73,7 +74,7 @@ def ori_savn_train(
         while True:
             agent.learned_input = None
             # Run episode for k steps or until it is done or has made a mistake (if dynamic adapt is true).
-            agent.sync_with_shared(shared_model)
+            #agent.sync_with_shared(shared_model)
             if args.verbose:
                 print("New inner step")
             exps_ = runner.run(params)
@@ -90,28 +91,30 @@ def ori_savn_train(
 
                 # Compute the loss.
                 #loss_hx = torch.cat((agent.hidden[0], agent.last_action_probs), dim=1)
-                learned_loss = agent.model.learned_loss(
-                        agent.learned_input, params
-                    )
-                agent.learned_input = None
+                # learned_loss = agent.model.learned_loss(
+                #         agent.learned_input, params
+                #     )
+                # agent.learned_input = None
 
                 if args.verbose:
-                    print("inner gradient")
-                inner_gradient = torch.autograd.grad(
-                    learned_loss,
-                    [v for _, v in params_list[episode_num].items()],
-                    create_graph=True,
-                    retain_graph=True,
-                    allow_unused=True,
-                )
-                loss_tracker.add_scalars({'learned loss':learned_loss.item()})
+                    print("noise gradient")
+                # inner_gradient = torch.autograd.grad(
+                #     learned_loss,
+                #     [v for _, v in params_list[episode_num].items()],
+                #     create_graph=True,
+                #     retain_graph=True,
+                #     allow_unused=True,
+                # )
+                # loss_tracker.add_scalars({'learned loss':learned_loss.item()})
 
-                params_list.append(
-                    SGD_step(params_list[episode_num], inner_gradient, args.inner_lr)
-                )
-                params = params_list[-1]
+                # params_list.append(
+                #     SGD_step(params_list[episode_num], inner_gradient, args.inner_lr)
+                # )
+                with torch.no_grad():
+                    for name, param in params.items():
+                        if "exclude" not in name and "ll" not in name:
+                            param = param - args.inner_lr * torch.randn_like(param)
 
-                episode_num += 1
 
         #loss = compute_loss(args, player, gpu_id, model_options)
         if runner.done:
@@ -129,7 +132,7 @@ def ori_savn_train(
         # Compute the meta_gradient, i.e. differentiate w.r.t. theta.
         meta_gradient = torch.autograd.grad(
             loss["total_loss"],
-            [v for _, v in params_list[0].items()],
+            [v for _, v in params.items()],
             allow_unused=True,
         )
 

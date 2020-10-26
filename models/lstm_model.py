@@ -28,22 +28,61 @@ class LstmModel(torch.nn.Module):
         self.actor_linear = nn.Linear(navi_arch_out_sz, action_sz)
         self.critic_linear = nn.Linear(navi_arch_out_sz, 1)
 
-    def forward(self, model_input):
+    def forward(self, model_input, params = None):
         '''保证输入的数据都是torch的tensor'''
         (hx, cx) = model_input['hidden']
-        state_embed2 = self.embed_state(model_input['fc'])
-        state_embed = F.relu(state_embed2)
-        #如果输入的envstate是一个batch，就要repeat word embedding
+        state = model_input['fc']
+        target = model_input['glove']
+        if params is None:
+            state_embed2 = self.embed_state(state)
+            state_embed = F.relu(state_embed2, True)
+            target_embed = F.relu(self.embed_target(model_input['glove']), True)
+            x = torch.cat((state_embed, target_embed), dim=1)
 
-        target_embed = F.relu(self.embed_target(model_input['glove']))
-        x = torch.cat((state_embed, target_embed), dim=1)
+            hx, cx = self.navi_net(x, (hx, cx))
+            x = F.relu(hx, True)
+            actor_out = self.actor_linear(x)
+            critic_out = self.critic_linear(x)
+        else:
+            state_embed = F.relu(
+                F.linear(
+                    state,
+                    weight=params["embed_state.weight"],
+                    bias=params["embed_state.bias"],
+                    ), True
+                )
+            target_embed = F.relu(
+                F.linear(
+                    target,
+                    weight=params["embed_target.weight"],
+                    bias=params["embed_target.bias"],
+                    ), True
+                )
+            x = torch.cat((state_embed, target_embed), dim=1)
+            hx, cx = torch.lstm_cell(
+                x,
+                (hx, cx),
+                params["navi_net.weight_ih"],
+                params["navi_net.weight_hh"],
+                params["navi_net.bias_ih"],
+                params["navi_net.bias_hh"],
+            )
+            x = F.relu(hx, True)
 
-        hx, cx = self.navi_net(x, (hx, cx))
-        x = F.relu(hx)
-        
+            critic_out = F.linear(
+                x,
+                weight=params["critic_linear.weight"],
+                bias=params["critic_linear.bias"],
+            )
+            actor_out = F.linear(
+                x,
+                weight=params["actor_linear.weight"],
+                bias=params["actor_linear.bias"],
+            )
+
         return dict(
-            policy = self.actor_linear(x),
-            value = self.critic_linear(x),
+            policy = actor_out,
+            value = critic_out,
             hidden = (hx, cx)
             )
 

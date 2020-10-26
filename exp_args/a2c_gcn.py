@@ -49,7 +49,7 @@ args.update(
     trainer = 'a2c_train',
     optim_args = dict(lr = 0.0007, alpha = 0.99, eps = 0.1),
     print_freq = 1000,
-    max_epi_length = 300,
+    max_epi_length = 100,
     model_save_freq = 1000000,
     nsteps = 10,
     verbose = False,
