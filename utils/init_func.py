@@ -40,7 +40,7 @@ def get_args(basename):
         print(f'Usage: {basename} <configuration_file_name>')
         exit()
     try:
-        conf_file = conf_file.split('.')[0]
+        #conf_file = conf_file.split('.')[0]
         args = importlib.import_module('exp_args.'+conf_file).args
         print(f'Loaded "{conf_file}", exp name: {args.exp_name}')
     except:

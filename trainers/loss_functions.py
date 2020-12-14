@@ -80,6 +80,50 @@ def basic_loss(
         value_loss=value_loss
         )
 
+def loss_with_entro(
+    v_batch,
+    pi_batch,
+    last_v,
+    exps,
+    gpu_id = -1,
+    gamma = 0.99,#discount factor for exps['rewards']
+    beta = 1e-2,#entropy regularization term
+    ):
+    """接受batch经验的带mask的简单loss计算，有动作熵"""
+    policy_loss = 0
+    value_loss = 0
+
+    R = last_v
+    td_target = list()
+
+    for r, mask in zip(exps['rewards'][::-1], exps['masks'][::-1]):
+        R = r + gamma * R * mask
+        td_target.append(R)
+
+    td_target = torch.FloatTensor(td_target[::-1]).reshape(-1, 1)
+    td_target = gpuify(td_target, gpu_id)
+
+    a_batch = torch.tensor(exps['action_idxs']).reshape(-1, 1)
+    a_batch = gpuify(a_batch, gpu_id)
+    
+    advantage = td_target - v_batch.detach()
+    advantage = gpuify(advantage, gpu_id)
+
+    prob = F.softmax(pi_batch, dim = 1)
+    log_prob = torch.log(prob)#F.log_softmax(pi_batch, dim = 1)
+    log_pi_a = log_prob.gather(1, a_batch)
+    entropies = -(log_prob * prob).sum(0).sum(0)
+
+    policy_loss = (-log_pi_a * advantage.detach()).mean() - beta*entropies
+    value_loss = (0.5*F.smooth_l1_loss(v_batch, td_target.detach())).mean()
+    total_loss = policy_loss + value_loss
+
+    return dict(
+        total_loss=total_loss, 
+        policy_loss=policy_loss, 
+        value_loss=value_loss
+        )
+
 def savn_loss(
     v_batch,
     log_pi_batch,

@@ -70,7 +70,7 @@ class A2CAgent:
         torch.save(state_to_save, save_path)
 
     def reset_hidden(self, thread_id):
-        pass
+        self.model.reset_hidden(thread_id)
     
     def clear_mems(self):
         pass
