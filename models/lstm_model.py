@@ -22,6 +22,7 @@ class LstmModel(torch.nn.Module):
 
         #navigation architecture
         navi_arch_out_sz = 512
+        self.hidden_sz = navi_arch_out_sz
         self.navi_net = nn.LSTMCell(middle_sz, navi_arch_out_sz)
 
         #output

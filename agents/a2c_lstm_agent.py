@@ -20,7 +20,7 @@ class A2CLstmAgent:
         self.model = model
         self.done = False
         self.threads = threads
-        self.hidden_state_sz = hidden_state_sz
+        self.hidden_state_sz = self.model.hidden_sz
         if self.gpu_id >= 0:
             with torch.cuda.device(self.gpu_id):
                 self.model = self.model.cuda()

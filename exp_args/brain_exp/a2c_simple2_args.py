@@ -28,13 +28,13 @@ args.update(
     rotate_angle = 45,
     total_train_frames = 10000000,
     total_eval_epi = 1000,
-    threads = 8,
+    threads = 16,
     exp_name = 'Simple2train',
     optimizer = 'RMSprop',
-    model = 'Simple1',
-    agent = 'A2CAgent',
+    model = 'Simple2',
+    agent = 'A2CLstmAgent',
     runner = 'A2CRunner',
-    loss_func = 'basic_loss',
+    loss_func = 'loss_with_entro',
     trainer = 'a2c_train',
     optim_args = dict(lr = 0.001,alpha = 0.99, eps = 0.1),
     print_freq = 10000,
@@ -44,8 +44,7 @@ args.update(
     gpu_ids = [0],
 )
 model_args_dict = dict(
-        action_sz = len(args.action_dict),
-        obs_stack=4,
+        action_sz = len(args.action_dict)
     )
 args.update(
     model_args = model_args_dict,

@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-#不会对输入输出做激活函数处理的。
+from utils.net_utils import toFloatTensor
+#不会对输入输出做激活函数处理的。 
 
 class SingleLSTM(nn.Module):
 
@@ -9,24 +10,18 @@ class SingleLSTM(nn.Module):
         self,
         input_sz,
         output_sz,
-        batch_size = 1
     ):
         super(SingleLSTM, self).__init__()
         self.input_sz = input_sz
         self.output_sz = output_sz
-        self.batch_size = batch_size
         self.layer1 = nn.LSTMCell(input_sz, output_sz)
-        self.hidden = (
-            torch.zeros(batch_size, output_sz),
-            torch.zeros(batch_size, output_sz)
-        )
 
-    def forward(self, x, params = None):
+    def forward(self, x, hidden, params = None):
 
         if params == None:
-            self.hidden = self.layer1(x, self.hidden)
+            out = self.layer1(x, hidden)
         else:
-            self.hidden = torch.lstm_cell(
+            out = torch.lstm_cell(
                 x,
                 self.hidden,
                 params["layer1.weight_ih"],
@@ -35,13 +30,7 @@ class SingleLSTM(nn.Module):
                 params["layer1.bias_hh"],
             )
 
-        return self.hidden[0]
-
-    def reset_hidden(self, thread = 0):
-
-        self.hidden[0][thread] = torch.zeros(1, self.output_sz)
-        self.hidden[1][thread] = torch.zeros(1, self.output_sz)
-
+        return out
 
 class SingleLinear(nn.Module):
 

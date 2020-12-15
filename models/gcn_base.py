@@ -33,6 +33,7 @@ class GcnBaseModel(torch.nn.Module):
         lstm_input_sz = 7 * 7 * 64
 
         self.hidden_state_sz = hidden_state_sz
+        self.hidden_sz = hidden_state_sz
         self.lstm = nn.LSTMCell(lstm_input_sz, hidden_state_sz)
         num_outputs = action_sz
         self.critic_linear = nn.Linear(hidden_state_sz, 1)
