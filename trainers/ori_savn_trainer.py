@@ -55,6 +55,8 @@ def ori_savn_train(
     #update_frames = args.nsteps
     loss_tracker = ScalarMeanTracker()
     while not end_flag.value:
+        if args.verbose:
+            print('new epi')
     
         # theta <- shared_initialization
         params_list = [get_params(shared_model, gpu_id)]
@@ -73,7 +75,7 @@ def ori_savn_train(
         while True:
             agent.learned_input = None
             # Run episode for k steps or until it is done or has made a mistake (if dynamic adapt is true).
-            agent.sync_with_shared(shared_model)
+            #agent.sync_with_shared(shared_model)
             if args.verbose:
                 print("New inner step")
             exps_ = runner.run(params)
@@ -117,6 +119,7 @@ def ori_savn_train(
         if runner.done:
             v_final = 0.0
         else:
+            print('sob')
             model_out = agent.model_forward(runner.last_obs, params = params)
             v_final = model_out['value'].detach().cpu().item()
         loss = loss_func(agent.v_batch, agent.log_pi_batch, agent.entropies, v_final, exps, gpu_id=gpu_id)

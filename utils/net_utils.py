@@ -37,10 +37,11 @@ def gpuify(tensor, gpu_id):
 def toFloatTensor(x, gpu_id):
     """ Convers x to a FloatTensor and puts on GPU.
         Support input as list or tuple"""
-    if isinstance(x, tuple):
+        #TODO 这里这样搞是有问题的
+    if isinstance(x, tuple)and not isinstance(x[0], list):
         return tuple(gpuify(torch.FloatTensor(x1), gpu_id) for x1 in x)
     
-    if isinstance(x, list): 
+    if isinstance(x, list) and not isinstance(x[0], list): 
         return list(gpuify(torch.FloatTensor(x1), gpu_id) for x1 in x)
 
     return gpuify(torch.FloatTensor(x), gpu_id)

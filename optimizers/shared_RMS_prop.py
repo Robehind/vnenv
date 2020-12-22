@@ -75,7 +75,7 @@ class SharedRMSprop(optim.Optimizer):
                 if group["weight_decay"] != 0:
                     grad = grad.add(group["weight_decay"], p.data)
 
-                square_avg.mul_(alpha).addcmul_(1 - alpha, grad, grad)
+                square_avg.mul_(alpha).addcmul_(grad, grad, value = 1 - alpha)
 
                 if group["centered"]:
                     grad_avg = state["grad_avg"]
@@ -93,6 +93,6 @@ class SharedRMSprop(optim.Optimizer):
                     buf.mul_(group["momentum"]).addcdiv_(grad, avg)
                     p.data.add_(-group["lr"], buf)
                 else:
-                    p.data.addcdiv_(-group["lr"], grad, avg)
+                    p.data.addcdiv_(grad, avg, value = -group["lr"])
 
         return loss

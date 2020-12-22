@@ -59,7 +59,8 @@ def SGD_step(theta, grad, lr):
     theta_i = {}
     j = 0
     for name, param in theta.items():
-        if grad[j] is not None and "exclude" not in name and "ll" not in name:
+        if grad[j] is not None and "exclude" not in name and "ll" not in name and 'A' not in name:
+            #if 'A' not in name:
             theta_i[name] = param - lr * grad[j]
         else:
             theta_i[name] = param
