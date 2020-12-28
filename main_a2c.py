@@ -13,6 +13,7 @@ from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide
 from utils.env_wrapper import make_envs, VecEnv
 from utils.init_func import get_args, make_exp_dir
+from utils.net_utils import optim2cuda
 import numpy as np
 def main():
     #读取参数
@@ -51,17 +52,21 @@ def main():
     chosen_objects = args.train_targets
 
     #初始化各个对象
-    optimizer = creator['optimizer'](
-        model.parameters(),
-        **args.optim_args
-    )
-
     agent = creator['agent'](
         list(args.action_dict.keys()),
         model,
         args.threads,
         gpu_id
     )
+
+    optimizer = creator['optimizer'](
+        model.parameters(),
+        **args.optim_args
+    )
+    if args.load_optim_dir is not '':
+        print("load optim %s"%args.load_optim_dir)
+        optimizer.load_state_dict(torch.load(args.load_optim_dir))
+        optim2cuda(optimizer, gpu_id)
 
     #生成多线程环境，每个线程可以安排不同的房间或者目标
     env_fns = []
