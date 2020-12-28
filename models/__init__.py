@@ -8,5 +8,5 @@ from .gcn_base import GcnBaseModel
 from .gcn_savn import GCNSAVN
 from .lite_savn import LiteSAVN
 from .linear_loss import LstmLinearLint
-from .basic.simple_model import Simple1, Simple2, Simple3
+from .basic.simple_model import SplitLinear, SplitLstm, Simple3
 from .div_gcnsavn import DIV_GCNSAVN

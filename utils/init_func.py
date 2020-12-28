@@ -64,7 +64,7 @@ def load_or_find_model(args):
     if args.load_model_dir is not '':
         if os.path.exists(args.load_model_dir):
             print("load %s"%args.load_model_dir)
-            frames = int(os.path.basename(args.load_model_dir).split('_')[1])
+            #frames = int(os.path.basename(args.load_model_dir).split('_')[1])
         else:
             raise Exception(f'{args.load_model_dir} is not exists.')
     else:

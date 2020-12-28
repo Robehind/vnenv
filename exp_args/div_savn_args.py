@@ -1,17 +1,17 @@
 from .default_args import args
 
 args.update(
-    #train_scenes = {'kitchen':'1-30',},#{'bathroom':[31],},
+    train_scenes = {'kitchen':'1-20',},#{'bathroom':[31],},
     #train_targets = {'kitchen':["Microwave"],},
     #test_scenes = {'kitchen':'25',},#{'bathroom':[31],},
     #test_sche_dir = '../thordata/test_schedule',
     
-    shuffle = False,
+    #shuffle = False,
     test_scenes = {
-        'kitchen':'21-30',
-        'living_room':'21-22,24-30',
-        'bedroom':'21-30',
-        'bathroom':'21-30',
+        'kitchen':'11-20',
+        #'living_room':'21-22,24-30',
+        #'bedroom':'21-30',
+        #'bathroom':'21-30',
     },
     test_targets = {
         'kitchen':[
@@ -43,10 +43,10 @@ args.update(
     },
     grid_size = 0.25,
     rotate_angle = 45,
-    total_train_frames = 1e8,
+    total_train_frames = 16000000.0,#1e8,
     total_eval_epi = 1000,
-    threads = 1,
-    exp_name = 'div_gcnsavn',
+    threads = 2,
+    exp_name = 'divgcnsavn',
     optimizer = 'SharedRMSprop',
     model = 'DIV_GCNSAVN',
     agent = 'DivSavnAgent',
@@ -56,13 +56,13 @@ args.update(
     trainer = 'ori_savn_train',
     optim_args = dict(lr = 0.0001),
     inner_lr = 0.0001,
-    print_freq = 100000,
+    print_freq = 10000,
     max_epi_length = 200,
-    model_save_freq = 1e7,
+    model_save_freq = 4000000,
     nsteps = 6,
     verbose = False,
     gpu_ids = [0],
-    #load_model_dir = '../check_points/A2CDemoModel_40000_2020-05-20_10-49-28.dat',
+    load_model_dir = '../EXPS/divgcnsavn_201222_185528/DIV_GCNSAVN_16000003_145804.dat',
     results_json = "result.json",
     reward_dict = {
         "collision": 0,

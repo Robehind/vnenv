@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import copy
 import os
-from utils.net_utils import toFloatTensor
+from utils.net_utils import toFloatTensor, save_model
 #让agent可以知道动作的字符串，也许在未来有作用
 class A2CAgent:
     """最简单a2c智能体"""
@@ -53,21 +53,7 @@ class A2CAgent:
             self.model.load_state_dict(shared_model.state_dict())
 
     def save_model(self, path_to_save, title):
-        if not os.path.exists(path_to_save):
-            os.makedirs(path_to_save)
-        state_to_save = self.model.state_dict()
-        import time
-        start_time = time.time()
-        time_str = time.strftime(
-            "%H%M%S", time.localtime(start_time)
-        )
-        save_path = os.path.join(
-            path_to_save,
-            "{0}_{1}.dat".format(
-                title, time_str
-            ),
-        )
-        torch.save(state_to_save, save_path)
+        save_model(self.model, path_to_save, title)
 
     def reset_hidden(self, thread_id):
         pass

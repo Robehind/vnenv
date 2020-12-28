@@ -60,7 +60,8 @@ def ori_savn_train(
     
         # theta <- shared_initialization
         params_list = [get_params(shared_model, gpu_id)]
-        params = params_list[-1]
+        c_params = params_list[-1]
+        i_params = params_list[-1]
         #loss_dict = {}
         episode_num = 0
         num_gradients = 0
@@ -78,7 +79,7 @@ def ori_savn_train(
             #agent.sync_with_shared(shared_model)
             if args.verbose:
                 print("New inner step")
-            exps_ = runner.run(params)
+            exps_ = runner.run(c_params)
             for k in exps:
                 exps[k] += exps_[k]
 
@@ -93,35 +94,43 @@ def ori_savn_train(
                 # Compute the loss.
                 #loss_hx = torch.cat((agent.hidden[0], agent.last_action_probs), dim=1)
                 learned_loss = agent.model.learned_loss(
-                        agent.learned_input, params
+                        agent.learned_input, c_params
                     )
-                agent.learned_input = None
 
                 if args.verbose:
                     print("inner gradient")
                 inner_gradient = torch.autograd.grad(
                     learned_loss,
-                    [v for _, v in params_list[episode_num].items()],
+                    #[v for _, v in params_list[episode_num].items()],
+                    [v for _, v in c_params.items()],
                     create_graph=True,
                     retain_graph=True,
                     allow_unused=True,
                 )
                 loss_tracker.add_scalars({'learned loss':learned_loss.item()})
 
-                params_list.append(
-                    SGD_step(params_list[episode_num], inner_gradient, args.inner_lr)
-                )
-                params = params_list[-1]
+                #params_list.append(
+                    #SGD_step(params_list[episode_num], inner_gradient, args.inner_lr)
+                #)
+                c_params = SGD_step(
+                    c_params, 
+                    inner_gradient, 
+                    args.inner_lr
+                    )
 
-                episode_num += 1
+                #params = params_list[-1]
+
+                #episode_num += 1
+                torch.cuda.empty_cache()
+
+            agent.learned_input = None
 
         #loss = compute_loss(args, player, gpu_id, model_options)
-        if runner.done:
-            v_final = 0.0
-        else:
-            print('sob')
-            model_out = agent.model_forward(runner.last_obs, params = params)
-            v_final = model_out['value'].detach().cpu().item()
+        #if runner.done:
+        v_final = 0.0
+        #else:
+            #model_out = agent.model_forward(runner.last_obs, params = params)
+            #v_final = model_out['value'].detach().cpu().item()
         loss = loss_func(agent.v_batch, agent.log_pi_batch, agent.entropies, v_final, exps, gpu_id=gpu_id)
         for k in loss:
             loss_tracker.add_scalars({k:loss[k].item()})
@@ -132,9 +141,11 @@ def ori_savn_train(
         # Compute the meta_gradient, i.e. differentiate w.r.t. theta.
         meta_gradient = torch.autograd.grad(
             loss["total_loss"],
-            [v for _, v in params_list[0].items()],
+            #[v for _, v in params_list[0].items()],
+            [v for _, v in i_params.items()],
             allow_unused=True,
         )
+        torch.cuda.empty_cache()
 
         transfer_gradient_to_shared(meta_gradient, shared_model, gpu_id)
         optimizer.step()
@@ -145,5 +156,3 @@ def ori_savn_train(
         results.update(loss_tracker.pop_and_reset())
         result_queue.put(results)
         
-
-

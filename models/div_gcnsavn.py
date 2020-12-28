@@ -90,7 +90,7 @@ class DIV_GCNSAVN(torch.nn.Module):
                     target,
                     weight=params["embed_glove.weight"],
                     bias=params["embed_glove.bias"],
-                )
+                ),True
             )
 
             glove_reshaped = glove_embedding.view(-1, 64, 1, 1).repeat(1, 1, 7, 7)
@@ -100,14 +100,14 @@ class DIV_GCNSAVN(torch.nn.Module):
                     action_embedding_input,
                     weight=params["embed_action.weight"],
                     bias=params["embed_action.bias"],
-                )
+                ),True
             )
             action_reshaped = action_embedding.view(-1, 10, 1, 1).repeat(1, 1, 7, 7)
 
             image_embedding = F.relu(
                 F.conv2d(
                     state, weight=params["conv1.weight"], bias=params["conv1.bias"]
-                )
+                ),True
             )
             x = self.dropout(image_embedding)
 
@@ -122,7 +122,7 @@ class DIV_GCNSAVN(torch.nn.Module):
                     gcn_feat,
                     weight=params["gcn_embed.weight"],
                     bias=params["gcn_embed.bias"],
-                )
+                ),True
             )
             gcn_reshaped = gcn_feat.view(-1, self.gcn_size, 1, 1).repeat(1, 1, 7, 7)
 
@@ -131,7 +131,7 @@ class DIV_GCNSAVN(torch.nn.Module):
             x = F.relu(
                 F.conv2d(
                     x, weight=params["pointwise.weight"], bias=params["pointwise.bias"]
-                )
+                ),True
             )
             x = self.dropout(x)
             out = x.view(x.size(0), -1)

@@ -12,14 +12,14 @@ args_dict = dict(
     model_save_freq = 10000,#每进行n个episode，就保存一次模型参数
     results_json = 'result.json',#测试完成后结果输出到哪个文件
     load_model_dir = '',#要读取的模型参数的完整路径，包括文件名
+    load_optim_dir = '',#要读取的优化其参数的完整路径，包括文件名
     exps_dir = '../EXPS',#保存所有实验文件夹的路径
     exp_name = 'demo_exp',#将用于生成本次实验的实验文件夹的文件名，因此尽量不要包含特殊符号
     exp_dir = '',#单次实验的完整路径，会根据时间自动生成
     test_sche_dir = '',#测试序列的json文件夹
-    nsteps = 5,#更新梯度的频率，每n步进行一次loss计算并更新梯度
-    threads = 4,#线程数
+    nsteps = 10,#更新梯度的频率，每n步进行一次loss计算并更新梯度
+    threads = 1,#线程数
     offline_data_dir = '../thordata/mixed_offline_data',#数据集的位置，该路径下应该是那些FloorPlan开头的文件夹才对
-    lr = 0.0002,#learning rate
     shuffle = True,#在为线程随机分配训练集时是否打乱顺序
 
     #componets args 
@@ -123,7 +123,7 @@ model_args_dict = dict(
 #优化器参数，这一块儿目前写得还不够灵活，你选择的需要什么参数，就都写在这里
 #然后在初始化优化器的时候，第一个参数为model的parameters，然后跟着**args.optim_args传入就行了
 optim_args = dict(
-        lr = args_dict['lr'],
+        lr = 0.0002,
         ),
 
 args_dict.update(model_args = model_args_dict, optim_args = optim_args)

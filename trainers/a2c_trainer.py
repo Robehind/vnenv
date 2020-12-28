@@ -1,5 +1,6 @@
 from tqdm import tqdm
 from utils.mean_calc import ScalarMeanTracker
+from utils.net_utils import save_model
 import os
 
 def a2c_train(
@@ -44,6 +45,9 @@ def a2c_train(
 
         if n_frames % args.model_save_freq == 0:
             agent.save_model(args.exp_dir, f'{args.model}_{n_frames}')
+            optim_path = os.path.join(args.exp_dir, 'optim')
+            save_model(optimizer, optim_path, f'{args.optimizer}_{n_frames}')
+
     envs.close()
     tx_writer.close()
     pbar.close()
