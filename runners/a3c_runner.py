@@ -58,10 +58,10 @@ class A3CRunner:
         v_final = v_final.detach().cpu().item()
         for k in obses:
             obses[k] = np.array(obses[k]).reshape(-1, *obses[k][0].shape)
-        out = self.agent.model_forward(obses, True)
+        batch_out = self.agent.model_forward(obses, True)
         #pi_batch = torch.cat(self.agent.pi_batch, dim = 0)
         #v_batch = torch.cat(self.agent.v_batch, dim = 0)
-        return out['policy'], out['value'], v_final, exps
+        return batch_out, v_final, exps
     
     def eval_run(self):
         pass

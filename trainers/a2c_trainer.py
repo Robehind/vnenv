@@ -22,8 +22,9 @@ def a2c_train(
     pbar = tqdm(total=args.total_train_frames)
     while n_frames < args.total_train_frames:
         
-        pi_batch, v_batch, v_final, exps = runner.run()
-        loss = loss_func(v_batch, pi_batch, v_final, exps, gpu_id)
+        batch_out, v_final, exps = runner.run()
+        #loss = loss_func(v_batch, pi_batch, v_final, exps, gpu_id)
+        loss = loss_func(batch_out, v_final, exps, gpu_id)
         optimizer.zero_grad()
         loss['total_loss'].backward()
         for k in loss:

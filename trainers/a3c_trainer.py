@@ -73,11 +73,12 @@ def a3c_train(
         # Train on the new episode.
         agent.sync_with_shared(shared_model)
         # Run episode for num_steps or until player is done.
-        pi_batch, v_batch, v_final, exps = runner.run()
-        if args.verbose:
-            print('Got exps')
+        #pi_batch, v_batch, v_final, exps = runner.run()
+        batch_out, v_final, exps = runner.run()
+        #loss = loss_func(v_batch, pi_batch, v_final, exps, gpu_id)
         # Compute the loss.
-        loss = loss_func(v_batch, pi_batch, v_final, exps, gpu_id=gpu_id)
+        loss = loss_func(batch_out, v_final, exps, gpu_id)
+        #loss = loss_func(v_batch, pi_batch, v_final, exps, gpu_id=gpu_id)
         loss["total_loss"].backward()
         for k in loss:
             loss_tracker.add_scalars({k:loss[k].item()})

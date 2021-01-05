@@ -52,9 +52,10 @@ class A2CRunner:
         v_final = out['value'].detach().cpu().numpy().reshape(-1)
         for k in obses:
             obses[k] = np.array(obses[k]).reshape(-1, *obses[k][0][0].shape)
-        out = self.agent.model_forward(obses, True)
-        pi_batch, v_batch = out['policy'], out['value']
-        return pi_batch, v_batch, v_final, exps
+        batch_out = self.agent.model_forward(obses, True)
+        #pi_batch, v_batch = out['policy'], out['value']
+        return batch_out, v_final, exps
+        #return pi_batch, v_batch, v_final, exps
     
     def eval_run(self):
         pass
