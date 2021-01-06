@@ -4,11 +4,11 @@ args.update(
     train_scenes = {'kitchen':'1-20',},#{'bathroom':[31],},
     #train_targets = {'kitchen':["Microwave"],},
     #test_scenes = {'kitchen':'25',},#{'bathroom':[31],},
-    #test_sche_dir = '../thordata/test_schedule',
+    test_sche_dir = '../thordata/test_schedule',
     
-    #shuffle = False,
+    shuffle = False,
     test_scenes = {
-        'kitchen':'11-20',
+        'kitchen':'21-30',
         #'living_room':'21-22,24-30',
         #'bedroom':'21-30',
         #'bathroom':'21-30',
@@ -55,7 +55,7 @@ args.update(
     loss_func = 'savn_loss',
     trainer = 'ori_savn_train',
     optim_args = dict(lr = 0.0001),
-    inner_lr = 0.0001,
+    inner_lr = 0,#.0001,
     print_freq = 10000,
     max_epi_length = 200,
     model_save_freq = 4000000,

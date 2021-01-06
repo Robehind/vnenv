@@ -34,7 +34,8 @@ class A2CAgent:
         return out
 
     def action(self, env_state):
-        out = self.model_forward(env_state)
+        with torch.no_grad():
+            out = self.model_forward(env_state)
         pi = out['policy']
         #softmax,形成在动作空间上的分布
         prob = F.softmax(pi, dim=1).cpu()

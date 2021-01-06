@@ -20,7 +20,10 @@ class SplitLinear(torch.nn.Module):
         tobs_embed_sz = 512
 
         conv_out_sz = CNNout_sz(SplitNetCNN().net,128,128)
-        self.vobs_conv = F.relu(SplitNetCNN(), True)
+        self.vobs_conv = nn.Sequential(
+            SplitNetCNN(),
+            nn.Flatten(),
+        )
         vobs_embed_sz = 512
         self.vobs_embed = SingleLinear(conv_out_sz*obs_stack, vobs_embed_sz)
 
@@ -66,7 +69,10 @@ class SplitLstm(torch.nn.Module):
         tobs_embed_sz = 512
 
         conv_out_sz = CNNout_sz(SplitNetCNN().net,128,128)
-        self.vobs_conv = SplitNetCNN()
+        self.vobs_conv = nn.Sequential(
+            SplitNetCNN(),
+            nn.Flatten(),
+        )
         vobs_embed_sz = 512
         self.vobs_embed = SingleLinear(conv_out_sz, vobs_embed_sz)
 
@@ -118,6 +124,7 @@ class Simple3(torch.nn.Module):
         conv_out_sz = CNNout_sz(House3DCNN().net,120,90)
         self.vobs_conv = nn.Sequential(
             House3DCNN(),
+            nn.Flatten(),
             SingleLinear(conv_out_sz, 1024),
             nn.ReLU(True),
         )

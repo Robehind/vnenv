@@ -1,12 +1,19 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-#No activate func
+#No activate func, no flatten
 
 def conv2dout_sz(H, K, S, P):
     return (H + 2*P - K)//S + 1
 
+def deconv2dout_sz(H,K,S,P):
+    return (H-1)*S-2*P+(K-1)+1
+
 def CNNout_sz(net,h,w):
+    H,W,out_c = CNNout_HWC(net, h, w)
+    return H*W*out_c
+
+def CNNout_HWC(net,h,w):
     H,W = h,w
     for c in net:
         name = c.__class__.__name__
@@ -19,8 +26,17 @@ def CNNout_sz(net,h,w):
             k,s,p = c.kernel_size,c.stride,c.padding
             H = conv2dout_sz(H,k,s,p)
             W = conv2dout_sz(W,k,s,p)
-
-    return H*W*out_c
+        elif 'sample' in name:
+            a,b = c.scale_factor
+            H *= a
+            W *= b
+        elif 'ConvTranspose2d' in name:
+            out_c = c.out_channels
+            k,s,p = c.kernel_size,c.stride,c.padding
+            H = deconv2dout_sz(H,k[0],s[0],p[0])
+            W = deconv2dout_sz(W,k[1],s[1],p[1])
+    
+    return int(H),int(W),int(out_c)
 
 class SplitNetCNN(nn.Module):
 #参考自splitNet的前四层卷积层
@@ -42,7 +58,7 @@ class SplitNetCNN(nn.Module):
             nn.Conv2d(128, 128, 3, 1, padding=1),
             nn.ReLU(inplace=True),
             nn.AvgPool2d(2,2),
-            nn.Flatten()
+            #nn.Flatten()
             )
 
     def forward(self, x, params = None):
@@ -74,7 +90,7 @@ class House3DCNN(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 128, 5, 2),
             nn.ReLU(inplace=True),
-            nn.Flatten()
+            #nn.Flatten()
             )
 
     def forward(self, x, params = None):

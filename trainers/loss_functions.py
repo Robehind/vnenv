@@ -2,6 +2,18 @@ import torch
 from utils.net_utils import gpuify
 import torch.nn.functional as F
 import numpy as np
+
+def loss_with_rgb(
+    batch_out,
+    last_v,
+    exps,
+    gpu_id = -1,
+    gamma = 0.99,
+    ):
+    loss = loss_with_entro(batch_out, last_v, exps, gpu_id, gamma)
+    loss['total_loss'] = loss['total_loss'] + batch_out['rgb_loss']
+    return loss
+
 def basic_loss_no_mask(
     v_batch,
     pi_batch,
@@ -42,8 +54,9 @@ def basic_loss_no_mask(
         )
 
 def basic_loss(
-    v_batch,
-    pi_batch,
+    #v_batch,
+    #pi_batch,
+    batch_out,
     last_v,
     exps,
     gpu_id = -1,
@@ -52,6 +65,8 @@ def basic_loss(
     """接受batch经验的带mask的简单loss计算，没有熵，没有gae"""
     policy_loss = 0
     value_loss = 0
+
+    pi_batch, v_batch = batch_out['policy'], batch_out['value']
 
     R = last_v
     td_target = list()
@@ -81,8 +96,7 @@ def basic_loss(
         )
 
 def loss_with_entro(
-    v_batch,
-    pi_batch,
+    batch_out,
     last_v,
     exps,
     gpu_id = -1,
@@ -95,6 +109,7 @@ def loss_with_entro(
 
     R = last_v
     td_target = list()
+    pi_batch, v_batch = batch_out['policy'], batch_out['value']
 
     for r, mask in zip(exps['rewards'][::-1], exps['masks'][::-1]):
         R = r + gamma * R * mask
