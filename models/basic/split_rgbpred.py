@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from ..basic_struct import SingleLinear, SingleLSTM
-from ..perception.auxiliary_net import RGBpred, liteRGBpred
+from ..perception.auxiliary_net import liteRGBpred
 from ..perception.simple_cnn import SplitNetCNN, CNNout_HWC
 
 class SplitLstmRGBpred(torch.nn.Module):

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 #No activate func, no flatten
 
 def conv2dout_sz(H, K, S, P):
@@ -61,16 +62,14 @@ class SplitNetCNN(nn.Module):
             #nn.Flatten()
             )
 
-    def forward(self, x, params = None):
+    def forward(self, x):
+        return self.net(x)
 
-        if params == None:
-            out = self.net(x)
-        else:
-            raise NotImplementedError
-        return out
-
-    def output_sz(self,h,w):
+    def out_fc_sz(self,h,w):
         return CNNout_sz(self.net,h,w)
+
+    def out_sz(self,h,w):
+        return CNNout_HWC(self.net,h,w)
 
 class House3DCNN(nn.Module):
 #House3D CNN
@@ -93,13 +92,11 @@ class House3DCNN(nn.Module):
             #nn.Flatten()
             )
 
-    def forward(self, x, params = None):
+    def forward(self, x):
+        return self.net(x)
 
-        if params == None:
-            out = self.net(x)
-        else:
-            raise NotImplementedError
-        return out
-
-    def output_sz(self,h,w):
+    def out_fc_sz(self,h,w):
         return CNNout_sz(self.net,h,w)
+
+    def out_sz(self,h,w):
+        return CNNout_HWC(self.net,h,w)

@@ -38,8 +38,8 @@ args.update(
 )
 model_args_dict = dict(
         action_sz = len(args.action_dict),
-        state_sz = 2048,
-        target_sz = 300,
+        vobs_sz = 2048,
+        tobs_sz = 300,
     )
 args.update(
     model_args = model_args_dict,

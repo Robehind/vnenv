@@ -28,7 +28,7 @@ args.update(
         'Done':None,
     },
     obs_dict = {
-        'image':'images128.hdf5',
+        'fc':'rgbpred_fc.hdf5',
     },
     target_dict = {
         'glove':'../thordata/word_embedding/word_embedding.hdf5',
@@ -37,10 +37,10 @@ args.update(
     rotate_angle = 45,
     total_train_frames = 1e8,
     total_eval_epi = 1000,
-    threads = 16,
-    exp_name = 'Perception1',
+    threads = 1,
+    exp_name = 'CNNpretrainLstm',
     optimizer = 'RMSprop',
-    model = 'SplitLstm',
+    model = 'FcLstmModel',
     agent = 'A2CLstmAgent',
     runner = 'A2CRunner',
     loss_func = 'loss_with_entro',
@@ -51,8 +51,6 @@ args.update(
     model_save_freq = 1e7,
     nsteps = 10,
     gpu_ids = [0],
-    #load_model_dir = '/home/zhiyu/EXPS/Perception1_201228_105017/SplitLstm_120000000_072718.dat',
-    #load_optim_dir = '/home/zhiyu/EXPS/Perception1_201228_105017/optim/RMSprop_120000000_072718.dat',
 )
 model_args_dict = dict(
         action_sz = len(args.action_dict)

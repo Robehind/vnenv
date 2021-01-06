@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from utils.net_utils import toFloatTensor
-#不会对输入输出做激活函数处理的。 
+#不会对输入输出做激活函数处理的。基本结构不封装model input，因为他们不是最终模型，不会被直接用于训练
 
 class SingleLSTM(nn.Module):
 
@@ -56,36 +56,72 @@ class SingleLinear(nn.Module):
                 )
         return out
 
-class ConvNet1(nn.Module):
-#参考自splitNet的前四层卷积层
+class SimpleMP1(torch.nn.Module):
+    """简单的后端网络，包括LSTM和决策输出层，输入是obs的embedding向量"""
     def __init__(
         self,
-        input_channels = 3
+        action_sz,
+        vobs_sz,
+        tobs_sz = 300,
     ):
-        super(ConvNet1, self).__init__()
-        self.input_channels = input_channels
-        self.net = nn.Sequential(
-            nn.Conv2d(input_channels, 32, 7, 4, padding=3),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 64, 3, 1, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2,2),
-            nn.Conv2d(64, 128, 3, 1, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2,2),
-            nn.Conv2d(128, 128, 3, 1, padding=1),
-            nn.ReLU(inplace=True),
-            nn.AvgPool2d(2,2),
-            nn.Flatten()
+        super(SimpleMP1, self).__init__()
+        tobs_embed_sz = 512
+        vobs_embed_sz = 512
+        infer_sz = 512
+
+        self.vobs_embed = SingleLinear(vobs_sz, vobs_embed_sz)
+        self.tobs_embed = SingleLinear(tobs_sz, tobs_embed_sz)
+        #mem&infer
+        self.hidden_sz = infer_sz
+        self.infer = SingleLSTM(tobs_embed_sz+vobs_embed_sz, infer_sz)
+        #plan
+        self.actor_linear = nn.Linear(infer_sz, action_sz)
+        self.critic_linear = nn.Linear(infer_sz, 1)
+
+    def forward(self, vobs, tobs, hidden):
+
+        vobs_embed = F.relu(self.vobs_embed(vobs), True)
+        tobs_embed = F.relu(self.tobs_embed(tobs), True)
+        x = torch.cat((vobs_embed, tobs_embed), dim=1)
+        (hx, cx) = self.infer(x, hidden)
+        x = hx
+        
+        return dict(
+            policy=self.actor_linear(x),
+            value=self.critic_linear(x),
+            hidden = (hx, cx)
             )
 
-    def forward(self, x, params = None):
+class SimpleMP2(torch.nn.Module):
+    """简单的后端网络，纯线性，输入是obs的embedding向量"""
+    def __init__(
+        self,
+        action_sz,
+        vobs_sz,
+        tobs_sz = 300,
+    ):
+        super(SimpleMP2, self).__init__()
+        tobs_embed_sz = 512
+        vobs_embed_sz = 512
+        infer_sz = 512
 
-        if params == None:
-            out = self.net(x)
-        else:
-            raise NotImplementedError
-        return out
+        self.vobs_embed = SingleLinear(vobs_sz, vobs_embed_sz)
+        self.tobs_embed = SingleLinear(tobs_sz, tobs_embed_sz)
+        #mem&infer
+        self.hidden_sz = infer_sz
+        self.infer = SingleLinear(tobs_embed_sz+vobs_embed_sz, infer_sz)
+        #plan
+        self.actor_linear = nn.Linear(infer_sz, action_sz)
+        self.critic_linear = nn.Linear(infer_sz, 1)
 
-    def output_shape(self,input_sz):
-        pass
+    def forward(self, vobs, tobs):
+
+        vobs_embed = F.relu(self.vobs_embed(vobs), True)
+        tobs_embed = F.relu(self.tobs_embed(tobs), True)
+        x = torch.cat((vobs_embed, tobs_embed), dim=1)
+        x = self.infer(x)
+        
+        return dict(
+            policy=self.actor_linear(x),
+            value=self.critic_linear(x),
+            )
