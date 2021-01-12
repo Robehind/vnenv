@@ -55,7 +55,7 @@ class A3CLstmAgent:
         
         return out
 
-    def action(self, env_state):
+    def action(self, env_state, eval_=False):
         
         out = self.model_forward(env_state)
         pi, _, hidden = out['policy'], out['value'], out['hidden']
@@ -65,7 +65,10 @@ class A3CLstmAgent:
         prob = F.softmax(pi, dim = 1).detach()
         self.probs_batch = torch.cat((self.probs_batch, prob), 0)
         #采样
-        action_idx = prob.multinomial(1).cpu().item()
+        if eval_:
+            action_idx = prob.argmax().cpu().item()
+        else:
+            action_idx = prob.multinomial(1).cpu().item()
 
         return self.actions[action_idx], action_idx
 

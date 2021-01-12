@@ -57,8 +57,9 @@ class A2CLstmAgent:
         
         return out
 
-    def action(self, env_state):
-        out = self.model_forward(env_state)
+    def action(self, env_state, eval_ = False):
+        with torch.no_grad():
+            out = self.model_forward(env_state)
         pi, hidden = out['policy'], out['hidden']
 
         self.hidden_batch[0].append(hidden[0].cpu().detach())
@@ -67,7 +68,10 @@ class A2CLstmAgent:
         prob = F.softmax(pi, dim = 1).cpu()
         self.probs_batch.append(prob.detach())
         #采样
-        action_idx = prob.multinomial(1).numpy().squeeze(1)
+        if eval_:
+            action_idx = prob.argmax(dim=1).numpy()
+        else:
+            action_idx = prob.multinomial(1).numpy().squeeze(1)
 
         #print(action_idx.shape)
         return [self.actions[i] for i in action_idx], action_idx

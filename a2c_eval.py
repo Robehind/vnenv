@@ -87,9 +87,10 @@ def main():
 
     pbar = tqdm(total=args.total_eval_epi)
     obs = envs.reset()
+    best_a = args.best_a
     while 1:
         agent.clear_mems()
-        action, _ = agent.action(obs)
+        action, _ = agent.action(obs, best_a)
         obs_new, r, done, info = envs.step(action)
         obs = obs_new
         stop = True

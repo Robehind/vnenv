@@ -33,14 +33,17 @@ class A2CAgent:
         
         return out
 
-    def action(self, env_state):
+    def action(self, env_state, eval_=False):
         with torch.no_grad():
             out = self.model_forward(env_state)
         pi = out['policy']
         #softmax,形成在动作空间上的分布
         prob = F.softmax(pi, dim=1).cpu()
         #采样
-        action_idx = prob.multinomial(1).numpy().squeeze(1)
+        if eval_:
+            action_idx = prob.argmax(dim=1).numpy()
+        else:
+            action_idx = prob.multinomial(1).numpy().squeeze(1)
 
         #print(action_idx.shape)
         return [self.actions[i] for i in action_idx], action_idx
