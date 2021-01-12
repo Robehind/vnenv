@@ -43,8 +43,8 @@ def basic_loss_no_mask(
     
 
     pi_a = F.softmax(pi_batch, dim = 1).gather(1, a_batch)
-    policy_loss = (-torch.log(pi_a) * advantage.detach()).mean()
-    value_loss = 0.5*F.smooth_l1_loss(v_batch, td_target.detach()).mean()
+    policy_loss = (-torch.log(pi_a) * advantage.detach()).sum()
+    value_loss = 0.5*F.smooth_l1_loss(v_batch, td_target.detach(), reduction='sum')
     total_loss = policy_loss + value_loss
 
     return dict(
@@ -85,8 +85,8 @@ def basic_loss(
     advantage = gpuify(advantage, gpu_id)
 
     pi_a = F.softmax(pi_batch, dim = 1).gather(1, a_batch)
-    policy_loss = (-torch.log(pi_a) * advantage.detach()).mean()
-    value_loss = (0.5*F.smooth_l1_loss(v_batch, td_target.detach())).mean()
+    policy_loss = (-torch.log(pi_a) * advantage.detach()).sum()
+    value_loss = 0.5*F.smooth_l1_loss(v_batch, td_target.detach(), reduction='sum')
     total_loss = policy_loss + value_loss
 
     return dict(
@@ -118,8 +118,9 @@ def loss_with_entro(
     td_target = torch.FloatTensor(td_target[::-1]).reshape(-1, 1)
     td_target = gpuify(td_target, gpu_id)
 
-    a_batch = torch.tensor(exps['action_idxs']).reshape(-1, 1)
-    a_batch = gpuify(a_batch, gpu_id)
+    a_batch = torch.tensor(exps['action_idxs'])
+    threads = a_batch.shape[1]
+    a_batch = gpuify(a_batch.reshape(-1, 1), gpu_id)
     
     advantage = td_target - v_batch.detach()
     advantage = gpuify(advantage, gpu_id)
@@ -127,10 +128,10 @@ def loss_with_entro(
     prob = F.softmax(pi_batch, dim = 1)
     log_prob = torch.log(prob)#F.log_softmax(pi_batch, dim = 1)
     log_pi_a = log_prob.gather(1, a_batch)
-    entropies = -(log_prob * prob).sum(0).sum(0)
+    entropies = -(log_prob * prob)
 
-    policy_loss = (-log_pi_a * advantage.detach()).mean() - beta*entropies
-    value_loss = (0.5*F.smooth_l1_loss(v_batch, td_target.detach())).mean()
+    policy_loss = (-log_pi_a * advantage.detach()).sum() - beta*entropies.sum()
+    value_loss = 0.5*F.smooth_l1_loss(v_batch, td_target.detach(), reduction='sum')
     total_loss = policy_loss + value_loss
 
     return dict(
