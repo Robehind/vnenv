@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from utils.net_utils import weights_init, norm_col_init
 
 class BaseModel(torch.nn.Module):
     """LSTM的隐藏状态不能由model自己来管理因为在a2c里一个模型会用于跑多个epi，不同的epi
@@ -35,16 +35,16 @@ class BaseModel(torch.nn.Module):
         self.actor_linear = nn.Linear(hidden_state_sz, num_outputs)
         self.action_predict_linear = nn.Linear(2 * lstm_input_sz, action_sz)
 
-        #self.apply(weights_init)
+        self.apply(weights_init)
         relu_gain = nn.init.calculate_gain("relu")
         self.conv1.weight.data.mul_(relu_gain)
-        # self.actor_linear.weight.data = norm_col_init(
-        #     self.actor_linear.weight.data, 0.01
-        # )
+        self.actor_linear.weight.data = norm_col_init(
+             self.actor_linear.weight.data, 0.01
+        )
         self.actor_linear.bias.data.fill_(0)
-        # self.critic_linear.weight.data = norm_col_init(
-        #     self.critic_linear.weight.data, 1.0
-        # )
+        self.critic_linear.weight.data = norm_col_init(
+            self.critic_linear.weight.data, 1.0
+        )
         self.critic_linear.bias.data.fill_(0)
 
         self.lstm.bias_ih.data.fill_(0)
