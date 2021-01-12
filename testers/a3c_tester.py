@@ -68,6 +68,8 @@ def a3c_test(
                 agent_state = test_sche[i][2], 
                 )
         test_sche.reverse()
+
+    best_a = args.best_a
     while t_epis:
         t_epis -= 1
 
@@ -83,7 +85,7 @@ def a3c_test(
                 print("New inner step")
             
             for _ in range(args.nsteps):
-                action, _ = agent.action(last_obs)
+                action, _ = agent.action(last_obs, best_a)
                 obs_new, r, done, info = env.step(action)
             
                 thread_reward += r
