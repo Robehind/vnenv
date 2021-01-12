@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from ..perception.simple_cnn import CNNout_sz, House3DCNN, SplitNetCNN
 from ..plan.rl_linear import AClinear
 from torchvision import transforms as T
+from utils.net_utils import weights_init, norm_col_init
 
 class SimpleMP(torch.nn.Module):
     """vobs和tobs都是已经被处理好的特征向量,没有封装input，不能直接用于训练"""
@@ -30,6 +31,13 @@ class SimpleMP(torch.nn.Module):
             self.infer = nn.LSTMCell(tobs_embed_sz+vobs_embed_sz, infer_sz)
         #plan
         self.ac_out = AClinear(action_sz, infer_sz)
+        self.apply(weights_init)
+        self.ac_out.actor_linear.weight.data = norm_col_init(
+            self.ac_out.actor_linear.weight.data, 0.01
+        )
+        self.ac_out.critic_linear.weight.data = norm_col_init(
+            self.ac_out.critic_linear.weight.data, 1.0
+        )
 
     def forward(self, vobs, tobs, hidden = None):
 
@@ -91,7 +99,7 @@ class SplitLstm(torch.nn.Module):
         CNN = SplitNetCNN()
         self.conv_out_sz = CNN.out_fc_sz(vobs_sz[0], vobs_sz[1])
         self.vobs_conv = nn.Sequential(
-            CNN(),
+            CNN,
             nn.Flatten(),
         )
         self.MP = SimpleMP(action_sz, self.conv_out_sz, tobs_sz, mode = 1)
