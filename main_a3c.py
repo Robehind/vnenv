@@ -18,9 +18,12 @@ from utils.mean_calc import ScalarMeanTracker
 from utils.thordata_utils import get_scene_names, random_divide
 from utils.init_func import get_args, make_exp_dir
 from utils.net_utils import save_model
+import random
 def main():
     #从命令行读取参数
     args = get_args(os.path.basename(__file__))
+    if args.seed == 1114:
+        args.seed = random.randint(0,999)
     #确认gpu可用情况
     if args.gpu_ids == -1:
         args.gpu_ids = [-1]
