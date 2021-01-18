@@ -24,10 +24,6 @@ def a3c_train(
     
     gpu_id = args.gpu_ids[thread_id % len(args.gpu_ids)]
     torch.cuda.set_device(gpu_id)
-    #设置随机数种子
-    torch.manual_seed(args.seed + thread_id)
-    if gpu_id >= 0:
-        torch.cuda.manual_seed(args.seed + thread_id)
     #initialize env and agent
 
     model = creator['model'](**args.model_args)

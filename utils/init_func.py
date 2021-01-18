@@ -2,6 +2,17 @@ import sys
 import importlib
 import os
 import time
+import numpy as np
+import torch
+import random
+
+def set_seed(seed):
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    ## optional
+    #torch.backends.cudnn.deterministic = TRue
 
 def search_newest_model(exps_dir, exp_name):
     """根据所有实验的路径和实验名称搜索最新的模型"""

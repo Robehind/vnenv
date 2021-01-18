@@ -7,23 +7,26 @@ import agents
 import environment as env
 import optimizers
 import torch
+import random
 from tqdm import tqdm
 from utils.thordata_utils import get_scene_names, random_divide, get_type, get_test_set
 from utils.env_wrapper import make_envs, VecEnv
 import numpy as np
 from utils.mean_calc import ScalarMeanTracker, LabelScalarTracker
-from utils.init_func import search_newest_model, get_args, make_exp_dir, load_or_find_model
+from utils.init_func import search_newest_model, get_args, make_exp_dir, load_or_find_model, set_seed
 from utils.record_utils import data_output
 #TODO 输出loss
 def main():
     #读取参数
     args = get_args(os.path.basename(__file__))
-
+    #随机数设定
+    if args.seed == 1114:
+        args.seed = random.randint(0,999)
+    set_seed(args.seed)
     #确认gpu可用情况
     if args.gpu_ids == -1:
         args.gpu_ids = [-1]
     else:
-        #torch.cuda.manual_seed(args.seed)
         assert torch.cuda.is_available()
     
     gpu_id = args.gpu_ids[0]

@@ -9,21 +9,24 @@ import agents
 import runners
 import environment as env
 import torch
+import random
 from tqdm import tqdm
 from utils.mean_calc import ScalarMeanTracker, LabelScalarTracker
 from utils.thordata_utils import get_scene_names, get_type, get_test_set
-from utils.init_func import search_newest_model, get_args, load_or_find_model, make_exp_dir
+from utils.init_func import search_newest_model, get_args, load_or_find_model, make_exp_dir, set_seed
 from utils.record_utils import data_output
 
 def main():
     #读取参数
     args = get_args(os.path.basename(__file__))
-
+    #随机数设定
+    if args.seed == 1114:
+        args.seed = random.randint(0,999)
+    set_seed(args.seed)
     #确认gpu可用情况
     if args.gpu_ids == -1:
         args.gpu_ids = [-1]
     else:
-        #torch.cuda.manual_seed(args.seed)
         assert torch.cuda.is_available()
         mp.set_start_method("spawn")
 
