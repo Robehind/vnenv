@@ -1,7 +1,3 @@
-"""
-An interface for asynchronous vectorized environments.
-"""
-
 import multiprocessing as mp
 import numpy as np
 import ctypes
@@ -197,7 +193,16 @@ class VecEnv:
         return dict_to_obs(result)
 
 
-def _subproc_worker(pipe, parent_pipe, env_fn, bufs, obs_shapes, obs_dtypes, eval_mode, test_sche = []):
+def _subproc_worker(
+    pipe, 
+    parent_pipe, 
+    env_fn, 
+    bufs, 
+    obs_shapes, 
+    obs_dtypes, 
+    eval_mode, 
+    test_sche = [],
+    ):
     """
     Control a single environment instance using IPC and
     shared memory.

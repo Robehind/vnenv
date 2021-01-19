@@ -59,22 +59,15 @@ def a3c_train(
             **args.optim_args
         )
 
-    #n_frames = 0
-    #total_epis = 0
-    #print_freq = args.print_freq / args.threads
-    #update_frames = args.nsteps
     loss_tracker = ScalarMeanTracker()
     while not end_flag.value:
         
         # Train on the new episode.
-        agent.sync_with_shared(shared_model)
+        agent.sync_params(shared_model)
         # Run episode for num_steps or until player is done.
-        #pi_batch, v_batch, v_final, exps = runner.run()
         batch_out, v_final, exps = runner.run()
-        #loss = loss_func(v_batch, pi_batch, v_final, exps, gpu_id)
         # Compute the loss.
         loss = loss_func(batch_out, v_final, exps, gpu_id)
-        #loss = loss_func(v_batch, pi_batch, v_final, exps, gpu_id=gpu_id)
         loss["total_loss"].backward()
         for k in loss:
             loss_tracker.add_scalars({k:loss[k].item()})
@@ -92,8 +85,6 @@ def a3c_train(
         if args.verbose:
             print('optimized')
         
-        #n_frames += update_frames
-        #if n_frames % print_freq == 0:
         results = runner.pop_mems()
         #total_epis += record['epis']
         #results.update(dict(n_frames=print_freq))

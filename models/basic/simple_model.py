@@ -105,10 +105,11 @@ class SplitLstm(torch.nn.Module):
         self.MP = SimpleMP(action_sz, self.conv_out_sz, tobs_sz, mode = 1)
         self.hidden_sz = self.MP.hidden_sz
 
-        mean = torch.tensor([0.5269, 0.4565, 0.3687]).view(1,3,1,1)
+        #normalize
+        mean = torch.FloatTensor([0.5269, 0.4565, 0.3687]).view(1,3,1,1)
         self.mean = torch.nn.Parameter(mean)
         self.mean.requires_grad = False
-        std = torch.tensor([0.0540, 0.0554, 0.0567]).view(1,3,1,1)
+        std = torch.FloatTensor([0.0540, 0.0554, 0.0567]).view(1,3,1,1)
         self.std = torch.nn.Parameter(std)
         self.std.requires_grad = False
 
@@ -121,7 +122,7 @@ class SplitLstm(torch.nn.Module):
         return self.MP(vobs_embed, model_input['glove'], model_input['hidden'])
 
 class FcLstmModel(torch.nn.Module):
-    """观察都是预处理好的特征向量的lstm模型，类似于LiteModel"""
+    """观察都是预处理好的特征向量的lstm模型"""
     def __init__(
         self,
         action_sz,
@@ -136,7 +137,7 @@ class FcLstmModel(torch.nn.Module):
         return self.net(model_input['fc'], model_input['glove'], model_input['hidden'])
 
 class FcLinearModel(torch.nn.Module):
-    """观察都是预处理好的特征向量的linear模型，类似于LiteModel"""
+    """观察都是预处理好的特征向量的linear模型"""
     def __init__(
         self,
         action_sz,
@@ -145,7 +146,6 @@ class FcLinearModel(torch.nn.Module):
     ):
         super(FcLinearModel, self).__init__()
         self.net = SimpleMP(action_sz, vobs_sz, tobs_sz)
-        #self.hidden_sz = self.net.hidden_sz
 
     def forward(self, model_input):
         return self.net(model_input['fc'], model_input['glove'])

@@ -73,14 +73,13 @@ class A3CLstmAgent:
         return self.actions[action_idx], action_idx
 
 
-    def sync_with_shared(self, shared_model):
-        """ Sync with the shared model. """
+    def sync_params(self, model):
+        """同步参数"""
         if self.gpu_id >= 0:
             with torch.cuda.device(self.gpu_id):
-                self.model.load_state_dict(shared_model.state_dict())
+                self.model.load_state_dict(model.state_dict())
         else:
-            self.model.load_state_dict(shared_model.state_dict())
-        pass
+            self.model.load_state_dict(model.state_dict())
 
     def reset_hidden(self):
         self.hidden_batch[0][-1] = gpuify(torch.zeros(1, self.hidden_state_sz), self.gpu_id)

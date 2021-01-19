@@ -21,18 +21,16 @@ class RandomAgent:
         self.done = False
 
     def model_forward(self, obs, batch_opt = False):
-        
         return None
 
     def action(self, env_state):
         return [random.choice(self.actions) for _ in range(self.threads)], 0
 
-    def sync_with_shared(self, shared_model):
-        """ Sync with the shared model. """
-        return 
+    def sync_params(self, shared_model):
+        pass 
 
     def save_model(self, path_to_save, title):
-        return
+        pass
     
     def reset_hidden(self, i = 1):
         pass

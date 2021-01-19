@@ -28,19 +28,19 @@ class A2CAgent:
         model_input = obs.copy()#防止obs被改变，因为obs在外部还被保存了一次
         for k in model_input:
             model_input[k] = toFloatTensor(model_input[k], self.gpu_id)
-            #obs[k].squeeze_()
+            
         out = self.model.forward(model_input)
         
         return out
 
-    def action(self, env_state, eval_=False):
+    def action(self, env_state, best_a = False):
         with torch.no_grad():
             out = self.model_forward(env_state)
         pi = out['policy']
         #softmax,形成在动作空间上的分布
         prob = F.softmax(pi, dim=1).cpu()
         #采样
-        if eval_:
+        if best_a:
             action_idx = prob.argmax(dim=1).numpy()
         else:
             action_idx = prob.multinomial(1).numpy().squeeze(1)
@@ -48,13 +48,13 @@ class A2CAgent:
         #print(action_idx.shape)
         return [self.actions[i] for i in action_idx], action_idx
 
-    def sync_with_shared(self, shared_model):
-        """ Sync with the shared model. """
+    def sync_params(self, model):
+        """同步参数"""
         if self.gpu_id >= 0:
             with torch.cuda.device(self.gpu_id):
-                self.model.load_state_dict(shared_model.state_dict())
+                self.model.load_state_dict(model.state_dict())
         else:
-            self.model.load_state_dict(shared_model.state_dict())
+            self.model.load_state_dict(model.state_dict())
 
     def save_model(self, path_to_save, title):
         save_model(self.model, path_to_save, title)

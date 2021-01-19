@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import copy
 import os
-from utils.net_utils import toFloatTensor
+from utils.net_utils import toFloatTensor, save_model
 from utils.net_utils import gpuify
 #让agent可以知道动作的字符串，也许在未来有作用
 class A2CLstmAgent:
@@ -51,13 +51,10 @@ class A2CLstmAgent:
         for k in model_input:
             model_input[k] = toFloatTensor(model_input[k], self.gpu_id)
 
-        
-            #obs[k].squeeze_()
         out = self.model.forward(model_input)
-        
         return out
 
-    def action(self, env_state, eval_ = False):
+    def action(self, env_state, best_a = False):
         with torch.no_grad():
             out = self.model_forward(env_state)
         pi, hidden = out['policy'], out['hidden']
@@ -68,45 +65,28 @@ class A2CLstmAgent:
         prob = F.softmax(pi, dim = 1).cpu()
         self.probs_batch.append(prob.detach())
         #采样
-        if eval_:
+        if best_a:
             action_idx = prob.argmax(dim=1).numpy()
         else:
             action_idx = prob.multinomial(1).numpy().squeeze(1)
 
-        #print(action_idx.shape)
         return [self.actions[i] for i in action_idx], action_idx
 
-    def sync_with_shared(self, shared_model):
-        """ Sync with the shared model. """
+    def sync_params(self, model):
+        """同步参数"""
         if self.gpu_id >= 0:
             with torch.cuda.device(self.gpu_id):
-                self.model.load_state_dict(shared_model.state_dict())
+                self.model.load_state_dict(model.state_dict())
         else:
-            self.model.load_state_dict(shared_model.state_dict())
-        pass
+            self.model.load_state_dict(model.state_dict())
 
     def save_model(self, path_to_save, title):
-        if not os.path.exists(path_to_save):
-            os.makedirs(path_to_save)
-        state_to_save = self.model.state_dict()
-        import time
-        start_time = time.time()
-        time_str = time.strftime(
-            "%H%M%S", time.localtime(start_time)
-        )
-        save_path = os.path.join(
-            path_to_save,
-            "{0}_{1}.dat".format(
-                title, time_str
-            ),
-        )
-        torch.save(state_to_save, save_path)
+        save_model(self.model, path_to_save, title)
 
     def reset_hidden(self, thread):
         self.hidden_batch[0][-1][thread] = torch.zeros(1, self.hidden_state_sz)
         self.hidden_batch[1][-1][thread] = torch.zeros(1, self.hidden_state_sz)
         self.probs_batch[-1][thread] = torch.zeros((1, len(self.actions)))
-        #self.learned_input = None
     
     def clear_mems(self):
         self.hidden_batch = [

@@ -70,7 +70,7 @@ def noise_train(
         while True:
             agent.learned_input = None
             # Run episode for k steps or until it is done or has made a mistake (if dynamic adapt is true).
-            #agent.sync_with_shared(shared_model)
+
             if args.verbose:
                 print("New inner step")
             exps_ = runner.run(params)
