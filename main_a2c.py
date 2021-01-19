@@ -86,7 +86,8 @@ def main():
             grid_size = args.grid_size,
             rotate_angle = args.rotate_angle,
             chosen_scenes = scene_names_div[i],
-            chosen_targets = chosen_objects
+            chosen_targets = chosen_objects,
+            seed = args.seed + i
         )
         env_fns.append(make_envs(env_args, creator['env']))
     envs = VecEnv(env_fns)

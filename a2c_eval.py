@@ -1,19 +1,15 @@
 import os
 os.environ["OMP_NUM_THREADS"] = '1'
-import time
-import trainers
 import models
 import agents
 import environment as env
-import optimizers
 import torch
 import random
 from tqdm import tqdm
-from utils.thordata_utils import get_scene_names, random_divide, get_type, get_test_set
+from utils.thordata_utils import get_type, get_test_set
 from utils.env_wrapper import make_envs, VecEnv
-import numpy as np
-from utils.mean_calc import ScalarMeanTracker, LabelScalarTracker
-from utils.init_func import search_newest_model, get_args, make_exp_dir, load_or_find_model, set_seed
+from utils.mean_calc import LabelScalarTracker
+from utils.init_func import get_args, make_exp_dir, load_or_find_model, set_seed
 from utils.record_utils import data_output
 #TODO 输出loss
 def main():
@@ -73,7 +69,8 @@ def main():
             grid_size = args.grid_size,
             rotate_angle = args.rotate_angle,
             chosen_scenes = scene_names_div[i],
-            chosen_targets = chosen_objects
+            chosen_targets = chosen_objects,
+            seed = args.seed + i
         )
         env_fns.append(make_envs(env_args, creator['env']))
     envs = VecEnv(env_fns, eval_mode = True, test_sche = test_set_div)

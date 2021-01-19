@@ -53,7 +53,9 @@ class DiscreteEnvironment:
         #人类必须自己保证这个列表里的目标合法，例如受glove支持，在房间中可以被找到，等等
         reset_sche = None,#TODO
         debug = False,
+        seed = 1114,
     ):
+        random.seed(seed)
         self.actions = list(action_dict.keys())
         self.action_dict = action_dict
         self.reward_dict = reward_dict
@@ -209,6 +211,7 @@ class DiscreteEnvironment:
                 self.intersect_targets = list(
                     set(self.chosen_targets[get_type(scene_name)]).intersection(set(self.all_objects))
                     )
+                self.intersect_targets.sort()
                 if self.intersect_targets == []:
                     raise Exception(f'In scene {self.scene_name}, {self.chosen_targets}, {self.all_objects}')
             #读h5py数据.没有读到的报错还没写
