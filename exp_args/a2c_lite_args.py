@@ -1,6 +1,7 @@
 from .default_args import args
 
 args.update(
+    seed = 20,
     train_scenes = {'kitchen':'25'},
     train_targets = {'kitchen':["Microwave", 'Sink'],},
     test_scenes = {'kitchen':'25',},
@@ -21,10 +22,10 @@ args.update(
     rotate_angle = 45,
     total_train_frames = 150000,
     total_eval_epi = 1000,
-    threads = 4,
+    threads = 16,
     exp_name = 'A2CLiteDemo',
     optimizer = 'Adam',
-    model = 'LiteModel',
+    model = 'FcLinearModel',
     agent = 'A2CAgent',
     runner = 'A2CRunner',
     loss_func = 'basic_loss',

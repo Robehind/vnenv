@@ -8,4 +8,4 @@ env_test.py
 test_vec_env.py
 speed_test.py
 *.json
-test.py
+test*.py

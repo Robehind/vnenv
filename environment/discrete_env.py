@@ -129,7 +129,8 @@ class DiscreteEnvironment:
                 ) as f:
                 visible_data = json.load(f)
             self.all_s_objects_id[s] = visible_data.keys()
-            self.all_s_objects[s] = [x.split('|')[0] for x in self.all_s_objects_id[s]]
+            self.all_s_objects[s] = set([x.split('|')[0] for x in self.all_s_objects_id[s]])
+            self.all_s_objects[s] = list(self.all_s_objects[s])
             if self.chosen_targets == None:
                 self.intersect_s_targets[s] = self.all_s_objects[s]
             else:
@@ -243,7 +244,7 @@ class DiscreteEnvironment:
         self.all_visible_states = self.states_where_visible(self.target_str)
 
         #Initialize position
-        self.set_agent_state(agent_state, self.all_visible_states)
+        self.set_agent_state(agent_state)
         self.start_state = copy.deepcopy(self.agent_state)
         self.his_states = [self.start_state for _ in range(self.his_len)]
 
@@ -263,8 +264,8 @@ class DiscreteEnvironment:
         return self.get_obs(True),\
                self.get_target_reper(self.target_str)
 
-    def set_agent_state(self, agent_state = None, ban_list = []):
-        """设置智能体的位姿。如果agent_state为None，则会随机选择一个不在banlist中的位置
+    def set_agent_state(self, agent_state = None):
+        """设置智能体的位姿。如果agent_state为None
         """
         if agent_state == None:
             #Done也算一步，就可以出生在可终止状态
