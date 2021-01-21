@@ -29,8 +29,6 @@ class DiscreteEnvironment:
             #包含Done字符串时，需要智能体自主提出结束episode，不包含时环境会自动判定是否结束
         },
         target_dict = {
-            'image':'images.hdf5',
-            'fc':'resnet50_fc.hdf5',
             'glove':'../thordata/word_embedding/word_embedding.hdf5',
         },
         obs_dict = {
@@ -54,8 +52,12 @@ class DiscreteEnvironment:
         reset_sche = None,#TODO
         debug = False,
         seed = 1114,
+        min_len_file = None,
     ):
         random.seed(seed)
+
+        self.min_len_file = min_len_file
+
         self.actions = list(action_dict.keys())
         self.action_dict = action_dict
         self.reward_dict = reward_dict
@@ -115,6 +117,28 @@ class DiscreteEnvironment:
         self.all_objects_id = None #房间支持可以找的所有物体以及其坐标，in str
         self.all_agent_states = None #智能体所有的可能的位姿状态，str
         self.all_visible_states = None #智能体在哪些位置可以看到当前目标， in str
+
+        #预先计算chosen_scenes中所有房间可以找到目标
+        self.all_s_objects = {} #所有房间支持可以找的所有物体str
+        self.all_s_objects_id = {} #所有房间支持可以找的所有物体以及其坐标，in str
+        self.intersect_s_targets = {}
+        for s in self.chosen_scenes:
+            s_path = os.path.join(self.offline_data_dir, s)
+            with open(
+                os.path.join(s_path, self.visible_file_name),"r",
+                ) as f:
+                visible_data = json.load(f)
+            self.all_s_objects_id[s] = visible_data.keys()
+            self.all_s_objects[s] = [x.split('|')[0] for x in self.all_s_objects_id[s]]
+            if self.chosen_targets == None:
+                self.intersect_s_targets[s] = self.all_s_objects[s]
+            else:
+                self.intersect_s_targets[s] = list(
+                    set(self.chosen_targets[get_type(s)]) & set(self.all_s_objects[s])
+                    )
+                self.intersect_s_targets[s].sort()
+                if self.intersect_s_targets[s] == []:
+                    raise Exception(f'In scene {s}')
         
         #不同的目标表示可能会导致在每次重置环境时读取新的状态表示文件,未来再改善，应该写到reset里
         self.target_reper_info = {}
@@ -202,18 +226,9 @@ class DiscreteEnvironment:
                 os.path.join(s_path, self.visible_file_name),"r",
             ) as f:
                 self.visible_data = json.load(f)
-            self.all_objects_id = self.visible_data.keys()
-            self.all_objects = [x.split('|')[0] for x in self.all_objects_id]
-            if self.chosen_targets == None:
-                self.intersect_targets = self.all_objects
-            else:
-                #TODO 这样可能会慢，后面来优化
-                self.intersect_targets = list(
-                    set(self.chosen_targets[get_type(scene_name)]).intersection(set(self.all_objects))
-                    )
-                self.intersect_targets.sort()
-                if self.intersect_targets == []:
-                    raise Exception(f'In scene {self.scene_name}, {self.chosen_targets}, {self.all_objects}')
+            self.all_objects_id = self.all_s_objects_id[self.scene_name]
+            self.all_objects = self.all_s_objects[self.scene_name]
+            self.intersect_targets = self.intersect_s_targets[self.scene_name]
             #读h5py数据.没有读到的报错还没写
             for type_, image_ in self.obs_loader.items():
                 if image_ is not None:
@@ -242,10 +257,9 @@ class DiscreteEnvironment:
             target = self.target_str,
             agent_done = False,
             false_action = 0,
-            #best_len = self.best_path_len()[1],
             )
         if calc_best_len: self.info.update(dict(best_len = self.best_path_len()[1]))
-        #print(t2-t1)
+        
         return self.get_obs(True),\
                self.get_target_reper(self.target_str)
 
@@ -253,13 +267,12 @@ class DiscreteEnvironment:
         """设置智能体的位姿。如果agent_state为None，则会随机选择一个不在banlist中的位置
         """
         if agent_state == None:
-            #legal_list = list(set(self.all_agent_states).difference(set(ban_list)))
-            #agent_state = random.choice(legal_list)
-            while 1:
-                agent_state = get_state_from_str(random.choice(self.all_agent_states))
-                agent_state.rotation = random.choice(self.rotations)
-                agent_state.horizon = random.choice(self.horizons)
-                if str(agent_state) not in ban_list: break
+            #Done也算一步，就可以出生在可终止状态
+            #while 1:
+            agent_state = get_state_from_str(random.choice(self.all_agent_states))
+            agent_state.rotation = random.choice(self.rotations)
+            agent_state.horizon = random.choice(self.horizons)
+            #if str(agent_state) not in ban_list: break
         else:
             assert agent_state in self.all_agent_states
             #assert agent_state not in ban_list
@@ -429,9 +442,22 @@ class DiscreteEnvironment:
         tmp_loader.close()
         return data
 
+    def read_shortest(self):
+        with open(
+            os.path.join(self.offline_data_dir,self.scene_name,self.min_len_file),
+            'r'
+            ) as f:
+            min_len = json.load(f)
+        id_ = min_len['map'][str(self.start_state)]
+        all_objID = [k for k in self.all_objects_id if k.split("|")[0] == self.target_str]
+        min_list = [min_len[x][id_] for x in all_objID]
+        #这里直接返回理论最小值，和具体找到哪个实例不相关。
+        return min(min_list)+1
+
     def best_path_len(self):
-        """算最短路，用于计算spl.未来考虑把最短路做成数据集直接读取，可以加快速度"""
-        #如果房间里有复数个目标，还要计算找出离当前位置最近的那一个
+        """算最短路，用于计算spl.当最短路数据存在时直接读取，可以加快速度，但不再返回最佳路径的细节"""
+        if self.min_len_file is not None:
+            return [], self.read_shortest()
         #file loader
         nx = importlib.import_module("networkx")
         json_graph_loader = importlib.import_module("networkx.readwrite")

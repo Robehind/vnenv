@@ -17,6 +17,7 @@ args_dict = dict(
     exp_name = 'demo_exp',#将用于生成本次实验的实验文件夹的文件名，因此尽量不要包含特殊符号
     exp_dir = '',#单次实验的完整路径，会根据时间自动生成
     test_sche_dir = '',#测试序列的json文件夹
+    min_len_file = None,#最短路长度保存文件
     nsteps = 10,#更新梯度的频率，每n步进行一次loss计算并更新梯度
     threads = 1,#线程数
     offline_data_dir = '../thordata/mixed_offline_data',#数据集的位置，该路径下应该是那些FloorPlan开头的文件夹才对

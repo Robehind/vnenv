@@ -70,7 +70,8 @@ def main():
             rotate_angle = args.rotate_angle,
             chosen_scenes = scene_names_div[i],
             chosen_targets = chosen_objects,
-            seed = args.seed + i
+            seed = args.seed + i,
+            min_len_file = args.min_len_file
         )
         env_fns.append(make_envs(env_args, creator['env']))
     envs = VecEnv(env_fns, eval_mode = True, test_sche = test_set_div)

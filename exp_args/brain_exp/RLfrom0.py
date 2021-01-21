@@ -1,6 +1,7 @@
 from ..default_args import args
 
 args.update(
+    exps_dir = '../brain_exp/rlfrom0lstm',
     train_scenes = {
         'kitchen':'1-15',
         'living_room':'1-15',
@@ -17,10 +18,22 @@ args.update(
         'bedroom':["HousePlant", "Lamp", "Book", "AlarmClock"],
         'bathroom':["Sink", "ToiletPaper", "SoapBottle", "LightSwitch"],
     },
-    #train_scenes = {'kitchen':'25'},
-    #train_targets = {'kitchen':["Microwave", 'Sink'],},
-    test_scenes = {'kitchen':'25',},
-    test_targets = {'kitchen':["Microwave", 'Sink'],},
+    test_scenes = {
+        'kitchen':'16-20',
+        'living_room':'16-20',
+        'bedroom':'16-20',
+        'bathroom':'16-20',
+    },
+    test_targets = {
+        'kitchen':[
+            "Toaster", "Microwave", "Fridge","CoffeeMaker",
+            ],
+        'living_room':[
+            "Pillow", "Laptop", "Television","GarbageCan",
+            ],
+        'bedroom':["HousePlant", "Lamp", "Book", "AlarmClock"],
+        'bathroom':["Sink", "ToiletPaper", "SoapBottle", "LightSwitch"],
+    },
     action_dict = {
         'MoveAhead':['m0'],
         'TurnLeft':['r-45'],
@@ -38,20 +51,20 @@ args.update(
     total_train_frames = 1e8,
     total_eval_epi = 1000,
     threads = 16,
-    exp_name = 'RLfrom0Split',
+    exp_name = 'exp4',
     optimizer = 'RMSprop',
     model = 'SplitLstm',
     agent = 'A2CLstmAgent',
     runner = 'A2CRunner',
-    loss_func = 'loss_with_entro',
+    loss_func = 'basic_loss',
     trainer = 'a2c_train',
-    optim_args = dict(lr = 0.0001,alpha = 0.99, eps = 0.1),
+    optim_args = dict(lr = 0.0007,alpha = 0.99, eps = 0.1),
     print_freq = 10000,
     max_epi_length = 200,
     model_save_freq = 1e7,
     nsteps = 100,
     gpu_ids = [0],
-    #load_model_dir = '/home/zhiyu/EXPS/Perception1_201228_105017/SplitLstm_120000000_072718.dat',
+    load_model_dir = '/home/zhiyu/brain_exp/rlfrom0lstm/exp4/exp4_2/SplitLstm_60000000_230050.dat',
     #load_optim_dir = '/home/zhiyu/EXPS/Perception1_201228_105017/optim/RMSprop_120000000_072718.dat',
 )
 model_args_dict = dict(

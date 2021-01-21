@@ -1,6 +1,8 @@
 from ..default_args import args
 
 args.update(
+    seed = 1,
+    min_len_file = 'min_len.json',
     exps_dir = '../brain_exp/resnet50lstm',
     train_scenes = {
         'kitchen':'1-15',
@@ -41,7 +43,7 @@ args.update(
         'Done':None,
     },
     obs_dict = {
-        'fc':'resnet50_fc_new.hdf5',
+        'fc':'resnet50fc.hdf5',
     },
     target_dict = {
         'glove':'../thordata/word_embedding/word_embedding.hdf5',
@@ -51,7 +53,7 @@ args.update(
     total_train_frames = 1e8,
     total_eval_epi = 1000,
     threads = 16,
-    exp_name = 'basic1',
+    exp_name = 'exp7',
     optimizer = 'RMSprop',
     model = 'FcLstmModel',
     agent = 'A2CLstmAgent',
@@ -69,9 +71,8 @@ args.update(
         'step':-0.01,
         'SuccessDone':10,
         'FalseDone':0,
-        #'angle_restrict': -0.05
     },
-    #load_model_dir = '/home/zhiyu/brain_exp/resnet50lstm/basic3/FcLstmModel_100000000_173532.dat',
+    #load_model_dir = '../brain_exp/resnet50linear/exp1_210118_144617/FcLinearModel_100000000_201124.dat',
     #load_optim_dir = '../EXPS/CNNpretrainLstm_Stable_5R_210109_202939/optim/RMSprop_100000000_021719.dat'
 )
 model_args_dict = dict(
