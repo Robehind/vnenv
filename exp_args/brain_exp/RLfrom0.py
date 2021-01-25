@@ -1,6 +1,8 @@
 from ..default_args import args
 
 args.update(
+    seed = 1,
+    min_len_file = 'min_len.json',
     exps_dir = '../brain_exp/rlfrom0lstm',
     train_scenes = {
         'kitchen':'1-15',
@@ -51,9 +53,9 @@ args.update(
     total_train_frames = 1e8,
     total_eval_epi = 1000,
     threads = 16,
-    exp_name = 'exp4',
+    exp_name = 'exp6',
     optimizer = 'RMSprop',
-    model = 'SplitLstm',
+    model = 'TutoLstm',
     agent = 'A2CLstmAgent',
     runner = 'A2CRunner',
     loss_func = 'basic_loss',
@@ -62,9 +64,9 @@ args.update(
     print_freq = 10000,
     max_epi_length = 200,
     model_save_freq = 1e7,
-    nsteps = 100,
+    nsteps = 80,
     gpu_ids = [0],
-    load_model_dir = '/home/zhiyu/brain_exp/rlfrom0lstm/exp4/exp4_2/SplitLstm_60000000_230050.dat',
+    #load_model_dir = '/home/zhiyu/brain_exp/rlfrom0lstm/exp4/exp4_2/SplitLstm_60000000_230050.dat',
     #load_optim_dir = '/home/zhiyu/EXPS/Perception1_201228_105017/optim/RMSprop_120000000_072718.dat',
 )
 model_args_dict = dict(

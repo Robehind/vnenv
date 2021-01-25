@@ -3,7 +3,7 @@ from ..default_args import args
 args.update(
     seed = 1,
     min_len_file = 'min_len.json',
-    exps_dir = '../brain_exp/resnet50lstm',
+    exps_dir = '../brain_exp/rgbpredlstm',
     train_scenes = {
         'kitchen':'1-15',
         'living_room':'1-15',
@@ -43,7 +43,7 @@ args.update(
         'Done':None,
     },
     obs_dict = {
-        'fc':'resnet50fc.hdf5',
+        'fc':'rgbpred_fc_nc.hdf5',
     },
     target_dict = {
         'glove':'../thordata/word_embedding/word_embedding.hdf5',
@@ -53,7 +53,7 @@ args.update(
     total_train_frames = 1e8,
     total_eval_epi = 1000,
     threads = 16,
-    exp_name = 'exp7',
+    exp_name = 'exp2',
     optimizer = 'RMSprop',
     model = 'FcLstmModel',
     agent = 'A2CLstmAgent',
@@ -64,7 +64,7 @@ args.update(
     print_freq = 10000,
     max_epi_length = 200,
     model_save_freq = 1e7,
-    nsteps = 40,
+    nsteps = 80,
     gpu_ids = [0],
     reward_dict = {
         'collision':-0.1,

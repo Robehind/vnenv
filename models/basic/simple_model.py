@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from ..perception.simple_cnn import CNNout_sz, House3DCNN, SplitNetCNN
+from ..perception.simple_cnn import CNNout_sz, House3DCNN, SplitNetCNN, TutorialCNN
 from ..plan.rl_linear import AClinear
 from torchvision import transforms as T
 from utils.net_utils import weights_init, norm_col_init
@@ -97,6 +97,41 @@ class SplitLstm(torch.nn.Module):
         #perception
         self.vobs_sz = vobs_sz
         CNN = SplitNetCNN()
+        self.conv_out_sz = CNN.out_fc_sz(vobs_sz[0], vobs_sz[1])
+        self.vobs_conv = nn.Sequential(
+            CNN,
+            nn.Flatten(),
+        )
+        self.MP = SimpleMP(action_sz, self.conv_out_sz, tobs_sz, mode = 1)
+        self.hidden_sz = self.MP.hidden_sz
+
+        #normalize
+        mean = torch.FloatTensor([0.5269, 0.4565, 0.3687]).view(1,3,1,1)
+        self.mean = torch.nn.Parameter(mean)
+        self.mean.requires_grad = False
+        std = torch.FloatTensor([0.0540, 0.0554, 0.0567]).view(1,3,1,1)
+        self.std = torch.nn.Parameter(std)
+        self.std.requires_grad = False
+
+    def forward(self, model_input):
+
+        vobs = model_input['image'].permute(0,3,1,2)/ 255.
+        vobs = (vobs-self.mean)/self.std
+        vobs_embed = self.vobs_conv(vobs)
+
+        return self.MP(vobs_embed, model_input['glove'], model_input['hidden'])
+
+class TutoLstm(torch.nn.Module):
+    def __init__(
+        self,
+        action_sz,
+        vobs_sz = (128, 128, 3),
+        tobs_sz = 300,
+    ):
+        super(TutoLstm, self).__init__()
+        #perception
+        self.vobs_sz = vobs_sz
+        CNN = TutorialCNN()
         self.conv_out_sz = CNN.out_fc_sz(vobs_sz[0], vobs_sz[1])
         self.vobs_conv = nn.Sequential(
             CNN,

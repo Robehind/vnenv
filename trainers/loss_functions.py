@@ -10,7 +10,7 @@ def loss_with_rgb(
     gpu_id = -1,
     gamma = 0.99,
     ):
-    loss = loss_with_entro(batch_out, last_v, exps, gpu_id, gamma)
+    loss = basic_loss(batch_out, last_v, exps, gpu_id, gamma)
     loss['total_loss'] = loss['total_loss'] + batch_out['rgb_loss']
     return loss
 
